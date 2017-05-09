@@ -21,6 +21,7 @@ Construa uma função (descodiﬁcador) que faça a DCT inversa.
 Veriﬁque que a imagem é igual à original.
 """
 
+bloco = np.arange(8, 8, dtype=np.float32)
 
 def codificador(bloco):
     # DCT2D direta
