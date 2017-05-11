@@ -111,7 +111,7 @@ def create_8x8block(array):
 
     for i in xrange(nblocos):
         block = array[0+(i*64):64+(i*64)].reshape(8, 8)
-        lista_blocos.append(block)
+        lista_blocos.append(block.astype(np.float32))
 
     return lista_blocos
 
@@ -123,45 +123,49 @@ def quality_factor(q_factor):
         factor = 2.0 - (q_factor * 2.0) / 100.0
     return factor
 
-x = cv2.imread("samples/Lena.tiff", cv2.IMREAD_GRAYSCALE)
 
-xi = x.ravel()
-
-# factor de qualidade q
-q = 50
-
-#
-alfa = quality_factor(q)
-
-# Matriz de quantificação K1
-# table K1 - Luminance quantize Matrix
-k1 = np.zeros((8, 8))
-k1[0] = [16, 11, 10, 16, 24, 40, 51, 61]
-k1[1] = [12, 12, 14, 19, 26, 58, 60, 55]
-k1[2] = [14, 13, 16, 24, 40, 57, 69, 56]
-k1[3] = [14, 17, 22, 29, 51, 87, 80, 62]
-k1[4] = [18, 22, 37, 56, 68, 109, 103, 77]
-k1[5] = [24, 35, 55, 64, 81, 104, 113, 92]
-k1[6] = [49, 64, 78, 87, 103, 121, 120, 101]
-k1[7] = [72, 92, 95, 98, 112, 100, 103, 99]
-
-
-def main(k1, alfa):
+def main():
     print "========================================================================================================"
-    print "================================Analise Ficheiro {}================================" \
-          "=======".format()
+    print "================================Analise Ficheiro lena================================" \
+          "======="
 
-    np.random.seed(68)
-    bloco = np.random.randint(-10, 10, size=(8, 8)) * 1.0
+    # np.random.seed(68)
+    # bloco = np.random.randint(-10, 10, size=(8, 8)) * 1.0
+
+    # factor de qualidade q
+    q = 50
+
+    #
+    alfa = quality_factor(q)
+
+    # Matriz de quantificação K1
+    # table K1 - Luminance quantize Matrix
+    k1 = np.zeros((8, 8))
+    k1[0] = [16, 11, 10, 16, 24, 40, 51, 61]
+    k1[1] = [12, 12, 14, 19, 26, 58, 60, 55]
+    k1[2] = [14, 13, 16, 24, 40, 57, 69, 56]
+    k1[3] = [14, 17, 22, 29, 51, 87, 80, 62]
+    k1[4] = [18, 22, 37, 56, 68, 109, 103, 77]
+    k1[5] = [24, 35, 55, 64, 81, 104, 113, 92]
+    k1[6] = [49, 64, 78, 87, 103, 121, 120, 101]
+    k1[7] = [72, 92, 95, 98, 112, 100, 103, 99]
+
+    x = cv2.imread("samples/Lena.tiff", cv2.IMREAD_GRAYSCALE)
+
+    xi = x.ravel()
+
+    lista_blocos = create_8x8block(xi)
 
     # le o ficheiro especifico
     # x_lena = np.fromfile("samples/lena_gray_scale.bmp", 'uint8')
 
-    bloco_dct = codificador(bloco, k1, alfa)
+    for bloco in lista_blocos:
 
-    bloco_rec = descodificador(bloco_dct, k1, alfa)
+        bloco_dct = codificador(bloco, k1, alfa)
 
-    print np.rint(bloco_rec) - bloco
+        bloco_rec = descodificador(bloco_dct, k1, alfa)
+
+        print np.all(np.rint(bloco_rec) == bloco)
 
     # for i in xrange(len(bloco)):
     # for z in xrange(len(bloco[i])):
