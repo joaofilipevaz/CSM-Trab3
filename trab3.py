@@ -167,6 +167,8 @@ def main():
 
         print np.all(np.rint(bloco_rec) == bloco)
 
+    cv2.imshow(bloco_rec)
+
     # for i in xrange(len(bloco)):
     # for z in xrange(len(bloco[i])):
     # (x_lena[0:64].reshape((8, 8)) / Q) * 50
