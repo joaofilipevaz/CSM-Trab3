@@ -22,13 +22,13 @@ Veriﬁque que a imagem é igual à original.
 def codificador(bloco, k1, alfa):
     # DCT2D direta
     bloco_dct = cv2.dct(bloco)
-    return (bloco_dct / k1) * alfa
+    return bloco_dct / (k1 * alfa)
 
 
 def descodificador(bloco_dct, k1, alfa):
     # DCT2D inversa (IDCT2D)
-    bloco_rec = (bloco_dct * k1) / alfa
-    return cv2.dct(bloco_rec, np.zeros((8, 8)), cv2.DCT_INVERSE)
+    bloco_rec = bloco_dct * (k1 * alfa)
+    return cv2.idct(bloco_rec)
 
 
 # 2
@@ -116,6 +116,21 @@ def create_8x8block(array):
     return lista_blocos
 
 
+def revert_to_original_block(lista_blocos, original_shape):
+    array_original = np.zeros(original_shape)
+
+    shape1 = 0
+    count = 0
+
+    for z in xrange(len(lista_blocos)):
+        array_original[shape1][0+(count*64):64+(count*64)] = lista_blocos[z].ravel()
+        count += 1
+        if count > 7:
+            count = 0
+            shape1 += 1
+
+    return array_original
+
 def quality_factor(q_factor):
     if q_factor <= 50:
         factor = 50.0 / q_factor
@@ -159,15 +174,32 @@ def main():
     # le o ficheiro especifico
     # x_lena = np.fromfile("samples/lena_gray_scale.bmp", 'uint8')
 
-    for bloco in lista_blocos:
+    bloco_dct = []
+    bloco_rec = []
 
-        bloco_dct = codificador(bloco, k1, alfa)
+    for i in xrange(len(lista_blocos)):
 
-        bloco_rec = descodificador(bloco_dct, k1, alfa)
+        bloco = codificador(lista_blocos[i], k1, alfa)
 
-        print np.all(np.rint(bloco_rec) == bloco)
+        bloco_dct.append(bloco)
 
-    cv2.imshow(bloco_rec)
+
+    #x_desc = revert_to_original_block(bloco_dct, x.shape)
+    #cv2.imshow("Lena codificada", x_desc.astype(np.uint8))
+
+    for i in xrange(len(lista_blocos)):
+
+        bloco = descodificador(bloco_dct[i], k1, alfa)
+
+        bloco_rec.append(bloco)
+
+    print np.all(np.rint(bloco_rec) == lista_blocos)
+
+    #print np.all(np.rint() == )
+
+    x_rec = revert_to_original_block(bloco_rec, x.shape)
+    cv2.imshow("Lena codificada", x_rec.astype(np.uint8))
+
 
     # for i in xrange(len(bloco)):
     # for z in xrange(len(bloco[i])):
