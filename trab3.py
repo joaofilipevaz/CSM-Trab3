@@ -114,30 +114,15 @@ def create_8x8block(array):
 
 
 def revert_to_original_block(lista_blocos, original_shape):
+
     array_original = np.zeros(original_shape)
 
-    shape1 = 0
     count = 0
-
-    #for i in xrange(lista_blocos):
-    #    array_original[i][i+8] = lista_blocos[i]
 
     for i in xrange(0, array_original.shape[0], 8):
         for z in xrange(0, array_original.shape[1], 8):
             array_original[i:(i+8),z:(z+8)] = lista_blocos[count]
             count+=1
-
-
-    #    for z in xrange(0, array.shape[1], 8):
-     #       block = array[i:(i+8),z:(z+8)]
-      #      lista_blocos.append(block.astype(np.float32))
-
-    #for z in xrange(len(lista_blocos)):
-    #    array_original[shape1][0+(count*64):64+(count*64)] = lista_blocos[z].ravel()
-    #    count += 1
-    #    if count > 7:
-    #        count = 0
-    #        shape1 += 1
 
     return array_original
 
