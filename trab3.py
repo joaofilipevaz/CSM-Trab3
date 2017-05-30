@@ -96,22 +96,19 @@ SNR, taxa de compressão, tempo de compressão e descompressão.
 
 def create_8x8block(array):
     # resultado da divisao modulo 8 pelo comprimento do array
-    mod8 = len(array) % 8
+    mod8 = (array.shape[0] % 8) == 0 and (array.shape[1] % 8) == 0
+
 
     # Lista de blocos 8x8
     lista_blocos = []
 
-    if mod8 != 0:
+    if mod8 != True:
         print "Dimensão do array não é multipla de 8"
-        # diff = np.zeros(8 - mod8)
-        # diff.fill(array[-1])
-        # array = np.append(array, diff)
 
-    nblocos = len(array) / 64
-
-    for i in xrange(nblocos):
-        block = array[0+(i*64):64+(i*64)].reshape(8, 8)
-        lista_blocos.append(block.astype(np.float32))
+    for i in xrange(0,array.shape[0], 8):
+        for z in xrange(0, array.shape[1], 8):
+            block = array[i:(i+8),z:(z+8)]
+            lista_blocos.append(block.astype(np.float32))
 
     return lista_blocos
 
@@ -137,6 +134,23 @@ def quality_factor(q_factor):
     else:
         factor = 2.0 - (q_factor * 2.0) / 100.0
     return factor
+
+
+# função auxiliar para calcular o SNR
+def snr(x, sinal_desquant):
+    # erro de quantificação
+    erro_quant = x - sinal_desquant
+
+    # potencia do sinal original
+    p_sinal = np.sum((x ** 2.0) / len(x))
+
+    # potencia do ruido
+    p_erro_quant = np.sum((erro_quant ** 2.0) / len(erro_quant))
+
+    # Signal to Noise Ratio
+    sig_noise_ratio = 10. * np.log10(p_sinal / p_erro_quant)
+
+    return round(sig_noise_ratio, 2)
 
 
 def main():
@@ -167,9 +181,9 @@ def main():
 
     x = cv2.imread("samples/Lena.tiff", cv2.IMREAD_GRAYSCALE)
 
-    xi = x.ravel()
+    # xi = x.ravel()*1.0
 
-    lista_blocos = create_8x8block(xi)
+    lista_blocos = create_8x8block(x)
 
     # le o ficheiro especifico
     # x_lena = np.fromfile("samples/lena_gray_scale.bmp", 'uint8')
@@ -184,8 +198,9 @@ def main():
         bloco_dct.append(bloco)
 
 
-    #x_desc = revert_to_original_block(bloco_dct, x.shape)
-    #cv2.imshow("Lena codificada", x_desc.astype(np.uint8))
+    x_desc = revert_to_original_block(bloco_dct, x.shape)
+    cv2.imshow("Lena cod alfa = 0", x_desc.astype(np.uint8))
+    k = cv2.waitKey(0) & 0xFF
 
     for i in xrange(len(lista_blocos)):
 
@@ -198,7 +213,11 @@ def main():
     #print np.all(np.rint() == )
 
     x_rec = revert_to_original_block(bloco_rec, x.shape)
-    cv2.imshow("Lena codificada", x_rec.astype(np.uint8))
+    print np.all(x == np.rint(x_rec))
+    cv2.imshow("Lena desc alfa=0", x_rec.astype(np.uint8))
+    k = cv2.waitKey(0) & 0xFF
+
+    cv2.imwrite("lena_output.png", x_rec.astype(np.uint8))
 
 
     # for i in xrange(len(bloco)):
