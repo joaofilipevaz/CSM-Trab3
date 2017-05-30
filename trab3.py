@@ -195,8 +195,8 @@ def main():
 
         bloco_dct.append(bloco)
 
-
     x_desc = revert_to_original_block(bloco_dct, x.shape)
+
     cv2.imshow("Lena cod alfa = 0", x_desc.astype(np.uint8))
     k = cv2.waitKey(0) & 0xFF
 
@@ -211,6 +211,9 @@ def main():
     #print np.all(np.rint() == )
 
     x_rec = revert_to_original_block(bloco_rec, x.shape)
+
+    print snr(x, x_rec.astype(np.uint8))
+
     print np.all(x == np.rint(x_rec))
     cv2.imshow("Lena desc alfa=0", x_rec.astype(np.uint8))
     k = cv2.waitKey(0) & 0xFF
