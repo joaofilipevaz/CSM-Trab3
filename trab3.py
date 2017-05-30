@@ -98,7 +98,6 @@ def create_8x8block(array):
     # resultado da divisao modulo 8 pelo comprimento do array
     mod8 = (array.shape[0] % 8) == 0 and (array.shape[1] % 8) == 0
 
-
     # Lista de blocos 8x8
     lista_blocos = []
 
@@ -125,6 +124,34 @@ def revert_to_original_block(lista_blocos, original_shape):
             count+=1
 
     return array_original
+
+
+def quantifica(dct_blocos8x8, matrizK1):
+
+    quant_dct_matrix = np.zeros(dct_blocos8x8.shape)
+
+    for i in xrange(8):
+        for j in xrange(8):
+            quant_dct_matrix[i][j] = dct_blocos8x8[i][j] / matrizK1[i][j]
+
+    return quant_dct_matrix
+
+def desquantifica(array):
+    # resultado da divisao modulo 8 pelo comprimento do array
+    mod8 = (array.shape[0] % 8) == 0 and (array.shape[1] % 8) == 0
+
+    # Lista de blocos 8x8
+    lista_blocos = []
+
+    if mod8 != True:
+        print "Dimensão do array não é multipla de 8"
+
+    for i in xrange(0,array.shape[0], 8):
+        for z in xrange(0, array.shape[1], 8):
+            block = array[i:(i+8),z:(z+8)]
+            lista_blocos.append(block.astype(np.float32))
+
+    return lista_blocos
 
 def quality_factor(q_factor):
     if q_factor <= 50:
@@ -177,6 +204,7 @@ def main():
     k1[6] = [49, 64, 78, 87, 103, 121, 120, 101]
     k1[7] = [72, 92, 95, 98, 112, 100, 103, 99]
 
+
     x = cv2.imread("samples/Lena.tiff", cv2.IMREAD_GRAYSCALE)
 
     # xi = x.ravel()*1.0
@@ -196,7 +224,7 @@ def main():
         bloco_dct.append(bloco)
 
     x_desc = revert_to_original_block(bloco_dct, x.shape)
-
+    #print snr(x, x_desc.astype(np.uint8))
     cv2.imshow("Lena cod alfa = 0", x_desc.astype(np.uint8))
     k = cv2.waitKey(0) & 0xFF
 
