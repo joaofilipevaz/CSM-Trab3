@@ -22,10 +22,14 @@ Veriﬁque que a imagem é igual à original.
 def codificador(bloco, k1, alfa):
     # DCT2D direta
     bloco_dct = cv2.dct(bloco)
-    return bloco_dct / (k1 * alfa)
+
+    # quantificação
+    dct_quant = np.round(bloco_dct / (k1 * alfa))
+
+    return dct_quant
 
 
-def descodificador(bloco_dct, k1, alfa):
+def descodificador(bloco_dct, k1, alfa, dc):
     # DCT2D inversa (IDCT2D)
     bloco_rec = bloco_dct * (k1 * alfa)
     return cv2.idct(bloco_rec)
@@ -126,33 +130,6 @@ def revert_to_original_block(lista_blocos, original_shape):
     return array_original
 
 
-def quantifica(dct_blocos8x8, matrizK1):
-
-    quant_dct_matrix = np.zeros(dct_blocos8x8.shape)
-
-    for i in xrange(8):
-        for j in xrange(8):
-            quant_dct_matrix[i][j] = dct_blocos8x8[i][j] / matrizK1[i][j]
-
-    return quant_dct_matrix
-
-def desquantifica(array):
-    # resultado da divisao modulo 8 pelo comprimento do array
-    mod8 = (array.shape[0] % 8) == 0 and (array.shape[1] % 8) == 0
-
-    # Lista de blocos 8x8
-    lista_blocos = []
-
-    if mod8 != True:
-        print "Dimensão do array não é multipla de 8"
-
-    for i in xrange(0,array.shape[0], 8):
-        for z in xrange(0, array.shape[1], 8):
-            block = array[i:(i+8),z:(z+8)]
-            lista_blocos.append(block.astype(np.float32))
-
-    return lista_blocos
-
 def quality_factor(q_factor):
     if q_factor <= 50:
         factor = 50.0 / q_factor
@@ -217,11 +194,22 @@ def main():
     bloco_dct = []
     bloco_rec = []
 
+    #DCT e Quantificação
     for i in xrange(len(lista_blocos)):
 
         bloco = codificador(lista_blocos[i], k1, alfa)
 
         bloco_dct.append(bloco)
+
+    dc = []
+    dc.append(bloco_dct[0][0][0])
+
+    # DPCM da componente DC
+    for i in xrange(1, len(bloco_dct)):
+
+        dc.append(bloco_dct[i][0][0] - bloco_dct[i-1][0][0])
+        print dc
+
 
     x_desc = revert_to_original_block(bloco_dct, x.shape)
     #print snr(x, x_desc.astype(np.uint8))
