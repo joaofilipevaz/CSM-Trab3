@@ -4,6 +4,7 @@
 # João Filipe Vaz - 40266
 # João Ventura - 38950
 
+
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -29,7 +30,7 @@ def codificador(bloco, k1, alfa):
     return dct_quant
 
 
-def descodificador(bloco_dct, k1, alfa, dc):
+def descodificador(bloco_dct, k1, alfa):
     # DCT2D inversa (IDCT2D)
     bloco_rec = bloco_dct * (k1 * alfa)
     return cv2.idct(bloco_rec)
@@ -53,6 +54,32 @@ descodiﬁcada.
 Construa uma função (codiﬁcador) que faça a codiﬁcação diferencial dos coeﬁcientes DC após a quantiﬁcação.
 Construa a função inversa para o descodiﬁcador.
 """
+
+
+def dpcm(bloco_dct):
+
+    dc = [bloco_dct[0][0][0]]
+
+    # DPCM da componente DC
+    for i in xrange(1, len(bloco_dct)):
+        diff = bloco_dct[i][0][0] - bloco_dct[i-1][0][0]
+        bloco_dct[i][0][0] = diff
+        dc.append(diff)
+
+    print dc
+    return bloco_dct
+
+
+def desc_dpcm(bloco_dct_dpcm):
+
+    dc = bloco_dct_dpcm[0][0][0]
+
+    # DPCM da componente DC
+    for i in xrange(1, len(bloco_dct_dpcm)):
+        dc_value = dc - bloco_dct_dpcm[i][0][0]
+        bloco_dct_dpcm[i][0][0] = dc_value
+
+    return bloco_dct_dpcm
 
 # 4
 
@@ -201,21 +228,18 @@ def main():
 
         bloco_dct.append(bloco)
 
-    dc = []
-    dc.append(bloco_dct[0][0][0])
+    # codificação parametro DC
+    bloco_dct_dpcm = dpcm(bloco_dct)
 
-    # DPCM da componente DC
-    for i in xrange(1, len(bloco_dct)):
-
-        dc.append(bloco_dct[i][0][0] - bloco_dct[i-1][0][0])
-        print dc
-
-
-    x_desc = revert_to_original_block(bloco_dct, x.shape)
+    x_desc = revert_to_original_block(bloco_dct_dpcm, x.shape)
     #print snr(x, x_desc.astype(np.uint8))
     cv2.imshow("Lena cod alfa = 0", x_desc.astype(np.uint8))
     k = cv2.waitKey(0) & 0xFF
 
+    # Descodificação parametro DC
+    bloco_dct = desc_dpcm(bloco_dct_dpcm)
+
+    # descodificação
     for i in xrange(len(lista_blocos)):
 
         bloco = descodificador(bloco_dct[i], k1, alfa)
