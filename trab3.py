@@ -59,7 +59,8 @@ Construa a função inversa para o descodiﬁcador.
 def dpcm(bloco_dct):
 
     # lista de controlo com os valores originais
-    dc_original = [bloco_dct[0][0][0]]
+    dc_original = [bloco_dct[i][0][0] for i in xrange(len(bloco_dct))]
+    #dc_original[:] = [x - 128 for x in dc_original]
 
     # lista de controlo com os valores DC diferenciais
     dc = [bloco_dct[0][0][0]]
@@ -70,12 +71,11 @@ def dpcm(bloco_dct):
     # DPCM da componente DC
     for i in xrange(1, len(bloco_dct)):
         diff = bloco_dct[i][0][0] - bloco_dct[i-1][0][0]
-        dc_original.append(bloco_dct[i][0][0])
         bloco_dct_dpcm[i][0][0] = diff
         dc.append(diff)
 
-    print dc_original
-    print dc
+    # print dc_original
+    # print dc
 
     return bloco_dct_dpcm
 
@@ -92,7 +92,7 @@ def desc_dpcm(bloco_dct_dpcm):
         bloco_dct[i][0][0] = dc_value
         dc.append(dc_value)
 
-    print dc
+    # print dc
 
     return bloco_dct
 
@@ -104,6 +104,37 @@ quantiﬁcação e crie um array com os pares (zero run length, nonzero value).
 Construa a função inversa para o descodiﬁcador.
 Junte estas funções às já realizadas e veja a imagem descodiﬁcada.
 """
+
+
+def zig_zag(bloco_dct_dpcm, zigzag):
+
+    zigzag_order = zigzag.ravel().astype(np.int8)
+
+    # array com os pares (zero run length, nonzero value)
+    bloco_dct_dpcm_zz = [] #np.copy(bloco_dct_dpcm)
+    temp = np.zeros(64)
+
+    for i in xrange(bloco_dct_dpcm):
+        bloco_1D = bloco_dct_dpcm[i][:][:].ravel()
+
+        for z in xrange(0, len(bloco_1D)):
+            temp[zigzag_order[z]] = bloco_1D[z]
+
+        bloco_dct_dpcm_zz.append(temp.reshape((8, 8)))
+
+    print temp
+
+
+
+    # índice para repor ordem original de array 1D em zigzag
+    #ind_oz = zigzag.reshape(64, order='F').astype('int')
+    # índice para ordenar valores de array 1D em zigzag
+    #ind_zo = np.argsort(ind_oz)
+
+
+def zag_zig(bloco_dct_dpcm_zigzag):
+    return None
+
 
 # 5
 
@@ -223,6 +254,19 @@ def main():
     k1[6] = [49, 64, 78, 87, 103, 121, 120, 101]
     k1[7] = [72, 92, 95, 98, 112, 100, 103, 99]
 
+    # zig-zag order
+    zigzag = np.zeros((8, 8))
+    zigzag[0] = [0, 1, 5, 6, 14, 15, 27, 28]
+    zigzag[1] = [2, 4, 7, 13, 16, 26, 29, 42]
+    zigzag[2] = [3, 8, 12, 17, 25, 30, 41, 43]
+    zigzag[3] = [9, 11, 18, 24, 31, 40, 44, 53]
+    zigzag[4] = [10, 19, 23, 32, 39, 45, 52, 54]
+    zigzag[5] = [20, 22, 33, 38, 46, 51, 55, 60]
+    zigzag[6] = [21, 34, 37, 47, 50, 56, 59, 61]
+    zigzag[7] = [35, 36, 48, 49, 57, 58, 62, 63]
+
+
+
 
     x = cv2.imread("samples/Lena.tiff", cv2.IMREAD_GRAYSCALE)
 
@@ -246,10 +290,14 @@ def main():
     # codificação parametro DC
     bloco_dct_dpcm = dpcm(bloco_dct)
 
-    x_desc = revert_to_original_block(bloco_dct_dpcm, x.shape)
+    bloco_dct_dpcm_zigzag = zig_zag(bloco_dct_dpcm, zigzag)
+
+    x_desc = revert_to_original_block(bloco_dct_dpcm_zigzag, x.shape)
     #print snr(x, x_desc.astype(np.uint8))
     cv2.imshow("Lena cod alfa = 0", x_desc.astype(np.uint8))
     k = cv2.waitKey(0) & 0xFF
+
+    bloco_dct_dpcm = zag_zig(bloco_dct_dpcm_zigzag)
 
     # Descodificação parametro DC
     bloco_dct = desc_dpcm(bloco_dct_dpcm)
