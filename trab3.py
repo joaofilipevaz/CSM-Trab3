@@ -58,28 +58,43 @@ Construa a função inversa para o descodiﬁcador.
 
 def dpcm(bloco_dct):
 
+    # lista de controlo com os valores originais
+    dc_original = [bloco_dct[0][0][0]]
+
+    # lista de controlo com os valores DC diferenciais
     dc = [bloco_dct[0][0][0]]
+
+    # copia do array original para um novo array
+    bloco_dct_dpcm = np.copy(bloco_dct)
 
     # DPCM da componente DC
     for i in xrange(1, len(bloco_dct)):
         diff = bloco_dct[i][0][0] - bloco_dct[i-1][0][0]
-        bloco_dct[i][0][0] = diff
+        dc_original.append(bloco_dct[i][0][0])
+        bloco_dct_dpcm[i][0][0] = diff
         dc.append(diff)
 
+    print dc_original
     print dc
-    return bloco_dct
+
+    return bloco_dct_dpcm
 
 
 def desc_dpcm(bloco_dct_dpcm):
 
-    dc = bloco_dct_dpcm[0][0][0]
+    dc = [bloco_dct_dpcm[0][0][0]]
+
+    bloco_dct = np.copy(bloco_dct_dpcm)
 
     # DPCM da componente DC
     for i in xrange(1, len(bloco_dct_dpcm)):
-        dc_value = dc - bloco_dct_dpcm[i][0][0]
-        bloco_dct_dpcm[i][0][0] = dc_value
+        dc_value = bloco_dct[i-1][0][0] + bloco_dct_dpcm[i][0][0]
+        bloco_dct[i][0][0] = dc_value
+        dc.append(dc_value)
 
-    return bloco_dct_dpcm
+    print dc
+
+    return bloco_dct
 
 # 4
 
