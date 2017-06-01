@@ -110,36 +110,64 @@ def zig_zag(bloco_dct_dpcm, zigzag):
 
     zigzag_order = zigzag.ravel().astype(np.int8)
 
-    # array com os pares (zero run length, nonzero value)
+    # lista com os pares (zero run length, nonzero value)
     ac = []
+    # lista bidimensional com os ac de cada bloco
     bloco_dct_dpcm_zz = []
+    # array temporario para guardar os valores ordenaados pela order do zigzag
     temp = np.zeros(64)
 
     for i in xrange(0, len(bloco_dct_dpcm)):
+        # captura o primeiro bloco 8x8
         bloco_1D = bloco_dct_dpcm[i][:][:].ravel()
+
         # print bloco_1D
         for z in xrange(0, len(bloco_1D)):
+            # guarda o valor no indice correspondente pela ordem do zigzag
             temp[zigzag_order[z]] = bloco_1D[z]
 
-        count = 0
+        # variavel auxiliar para contar o numero de zeros
+        zeros = 0
+
         # print temp
         for z in xrange(1, len(temp)):
+            # valida o fim do bloco
             if (temp[z] == 0) and (z == 63):
                 ac.append((0, 0))
             elif temp[z] == 0:
-                count += 1
+                zeros += 1
             else:
-                ac.append((count, int(temp[z])))
-                count = 0
+                # adiciona o um tuplo (run length code, value)
+                ac.append((zeros, int(temp[z])))
+                zeros = 0
+
         # print ac
         bloco_dct_dpcm_zz.append(ac)
         ac = []
 
-    print bloco_dct_dpcm_zz
+    return bloco_dct_dpcm_zz
 
 
-def zag_zig(bloco_dct_dpcm_zigzag):
-    return None
+def zag_zig(bloco_dct_dpcm_zz):
+
+    # lista de output 8x8
+    bloco_dct_dpcm = []
+
+    for i in xrange(0, len(bloco_dct_dpcm_zz)):
+        ac = bloco_dct_dpcm_zz[i]
+        temp = np.zeros(64)
+
+        ultima_pos = 0
+
+        for z in xrange(0, len(ac)):
+            zeros = ac[z][0]
+            value = ac[z][1]
+            temp[zeros+1+ultima_pos] = value
+            ultima_pos = zeros+1
+
+        bloco_dct_dpcm.append(temp)
+
+    return bloco_dct_dpcm
 
 
 # 5
@@ -296,14 +324,14 @@ def main():
     # codificação parametro DC
     bloco_dct_dpcm = dpcm(bloco_dct)
 
-    bloco_dct_dpcm_zigzag = zig_zag(bloco_dct_dpcm, zigzag)
+    bloco_dct_dpcm_zz = zig_zag(bloco_dct_dpcm, zigzag)
 
-    x_desc = revert_to_original_block(bloco_dct_dpcm_zigzag, x.shape)
+    x_desc = revert_to_original_block(bloco_dct_dpcm_zz, x.shape)
     #print snr(x, x_desc.astype(np.uint8))
     cv2.imshow("Lena cod alfa = 0", x_desc.astype(np.uint8))
     k = cv2.waitKey(0) & 0xFF
 
-    bloco_dct_dpcm = zag_zig(bloco_dct_dpcm_zigzag)
+    bloco_dct_dpcm = zag_zig(bloco_dct_dpcm_zz)
 
     # Descodificação parametro DC
     bloco_dct = desc_dpcm(bloco_dct_dpcm)
