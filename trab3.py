@@ -117,12 +117,12 @@ def zig_zag(bloco_dct_dpcm, zigzag):
 
     for i in xrange(0, len(bloco_dct_dpcm)):
         bloco_1D = bloco_dct_dpcm[i][:][:].ravel()
-        print bloco_1D
+        # print bloco_1D
         for z in xrange(0, len(bloco_1D)):
             temp[zigzag_order[z]] = bloco_1D[z]
 
         count = 0
-        print temp
+        # print temp
         for z in xrange(1, len(temp)):
             if (temp[z] == 0) and (z == 63):
                 ac.append((0, 0))
@@ -131,7 +131,7 @@ def zig_zag(bloco_dct_dpcm, zigzag):
             else:
                 ac.append((count, int(temp[z])))
                 count = 0
-        print ac
+        # print ac
         bloco_dct_dpcm_zz.append(ac)
         ac = []
 
