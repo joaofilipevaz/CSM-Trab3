@@ -111,8 +111,10 @@ def zig_zag(bloco_dct_dpcm, zigzag):
     zigzag_order = zigzag.ravel().astype(np.int8)
 
     # array com os pares (zero run length, nonzero value)
+    ac = []
     bloco_dct_dpcm_zz = [] #np.copy(bloco_dct_dpcm)
     temp = np.zeros(64)
+
 
     for i in xrange(bloco_dct_dpcm):
         bloco_1D = bloco_dct_dpcm[i][:][:].ravel()
@@ -120,9 +122,20 @@ def zig_zag(bloco_dct_dpcm, zigzag):
         for z in xrange(0, len(bloco_1D)):
             temp[zigzag_order[z]] = bloco_1D[z]
 
-        bloco_dct_dpcm_zz.append(temp.reshape((8, 8)))
+        # bloco_dct_dpcm_zz.append(temp.reshape((8, 8)))
+
+        valores_nao_nulos = np.where(temp)[0]
+
+        for z in xrange(1, len(valores_nao_nulos)):
+            if z+1 < len(valores_nao_nulos):
+                num_zeros = valores_nao_nulos[z] - valores_nao_nulos[z-1]
+                ac.append((num_zeros,temp[valores_nao_nulos[z]]))
+            else:
+
+        ac.append((0, 0))
 
     print temp
+    print ac
 
 
 
