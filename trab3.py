@@ -115,29 +115,25 @@ def zig_zag(bloco_dct_dpcm, zigzag):
     bloco_dct_dpcm_zz = [] #np.copy(bloco_dct_dpcm)
     temp = np.zeros(64)
 
-
-    for i in xrange(bloco_dct_dpcm):
+    for i in xrange(0, len(bloco_dct_dpcm)):
         bloco_1D = bloco_dct_dpcm[i][:][:].ravel()
 
         for z in xrange(0, len(bloco_1D)):
             temp[zigzag_order[z]] = bloco_1D[z]
 
-        # bloco_dct_dpcm_zz.append(temp.reshape((8, 8)))
+        count = 0
 
-        valores_nao_nulos = np.where(temp)[0]
-
-        for z in xrange(1, len(valores_nao_nulos)):
-            if z+1 < len(valores_nao_nulos):
-                num_zeros = valores_nao_nulos[z] - valores_nao_nulos[z-1]
-                ac.append((num_zeros,temp[valores_nao_nulos[z]]))
+        for z in xrange(1, len(temp)):
+            if (temp[z] == 0) and (z == 63):
+                ac.append((0, 0))
+            elif temp[z] == 0:
+                count += 1
             else:
-
-        ac.append((0, 0))
+                ac.append((count, temp[z]))
+                count = 0
 
     print temp
     print ac
-
-
 
     # índice para repor ordem original de array 1D em zigzag
     #ind_oz = zigzag.reshape(64, order='F').astype('int')
