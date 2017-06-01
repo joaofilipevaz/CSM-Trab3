@@ -112,7 +112,7 @@ def zig_zag(bloco_dct_dpcm, zigzag):
 
     # array com os pares (zero run length, nonzero value)
     ac = []
-    bloco_dct_dpcm_zz = [] #np.copy(bloco_dct_dpcm)
+    bloco_dct_dpcm_zz = []
     temp = np.zeros(64)
 
     for i in xrange(0, len(bloco_dct_dpcm)):
@@ -129,16 +129,14 @@ def zig_zag(bloco_dct_dpcm, zigzag):
             elif temp[z] == 0:
                 count += 1
             else:
-                ac.append((count, temp[z]))
+                ac.append((count, int(temp[z])))
                 count = 0
 
-    print temp
-    print ac
+        bloco_dct_dpcm_zz.append(ac)
+        ac = []
 
-    # índice para repor ordem original de array 1D em zigzag
-    #ind_oz = zigzag.reshape(64, order='F').astype('int')
-    # índice para ordenar valores de array 1D em zigzag
-    #ind_zo = np.argsort(ind_oz)
+    print temp
+    print bloco_dct_dpcm_zz
 
 
 def zag_zig(bloco_dct_dpcm_zigzag):
