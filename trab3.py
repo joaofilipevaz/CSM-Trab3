@@ -240,8 +240,10 @@ def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm):
             amp = '{0:b}'.format(value)
             # o tuplo (runlength, size) é codificado recorrendo a tabela K5 com codigo de Huffman
             bitStream += K5[(runlength, size)]
-            # o valor é codificado sem huffman
-            bitStream += amp
+
+            if value != 0:
+                # o valor é codificado sem huffman
+                bitStream += amp
 
 
 
@@ -313,6 +315,15 @@ def quality_factor(q_factor):
     else:
         factor = 2.0 - (q_factor * 2.0) / 100.0
     return factor
+
+
+def ones_complement(value, size):
+    if value >= 0:
+        return '{0:b}'.format(value)
+    else:
+        bit_lenght = "{" + "0:0{}b".format(str(size)) + "}"
+        return bit_lenght.format(2**size - 1 - abs(value))
+
 
 
 # função auxiliar para calcular o SNR
