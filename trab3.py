@@ -183,8 +183,9 @@ def zag_zig(bloco_dct_dpcm_zz, zigzag):
         bloco_1D_ordenado = np.zeros(64)
 
         for t in xrange(1, len(temp)):
-            # guarda o valor no indice correspondente pela ordem do zigzag
-            bloco_1D_ordenado[zigzag_order[t]] = temp[t]
+            if temp[t] != 0:
+                # guarda o valor no indice correspondente pela ordem do zigzag
+                bloco_1D_ordenado[np.where(zigzag_order == t)[0][0]] = temp[t]
 
         bloco_1D_ordenado = bloco_1D_ordenado.reshape((8, 8))
 
