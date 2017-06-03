@@ -106,10 +106,9 @@ Junte estas funções às já realizadas e veja a imagem descodiﬁcada.
 """
 
 
-def zig_zag(bloco_dct_dpcm, zigzag):
+def zig_zag(bloco_dct_dpcm, zigzag, debug):
 
     zigzag_order = zigzag.ravel().astype(np.int8)
-
 
     # lista bidimensional com os ac de cada bloco
     bloco_dct_dpcm_zz = []
@@ -122,7 +121,8 @@ def zig_zag(bloco_dct_dpcm, zigzag):
 
         # lista com os pares (zero run length, nonzero value)
         ac = []
-        if i == 0:
+
+        if i == 0 and debug:
             print bloco_1D
 
         for z in xrange(0, len(bloco_1D)):
@@ -131,7 +131,8 @@ def zig_zag(bloco_dct_dpcm, zigzag):
 
         # variavel auxiliar para contar o numero de zeros
         zeros = 0
-        if i == 0:
+
+        if i == 0 and debug:
             print temp
 
         for t in xrange(1, len(temp)):
@@ -144,14 +145,16 @@ def zig_zag(bloco_dct_dpcm, zigzag):
                 # adiciona o um tuplo (run length code, value)
                 ac.append((zeros, int(temp[t])))
                 zeros = 0
-        if i == 0:
+
+        if i == 0 and debug:
             print ac
+
         bloco_dct_dpcm_zz.append(ac)
 
     return bloco_dct_dpcm_zz
 
 
-def zag_zig(bloco_dct_dpcm_zz, zigzag):
+def zag_zig(bloco_dct_dpcm_zz, zigzag, debug):
 
     zigzag_order = zigzag.ravel().astype(np.int8)
 
@@ -161,7 +164,7 @@ def zag_zig(bloco_dct_dpcm_zz, zigzag):
     for i in xrange(0, len(bloco_dct_dpcm_zz)):
         ac = bloco_dct_dpcm_zz[i]
 
-        if i == 0:
+        if i == 0 and debug:
             print ac
 
         temp = np.zeros(64)
@@ -176,7 +179,7 @@ def zag_zig(bloco_dct_dpcm_zz, zigzag):
                 temp[zeros+1+ultima_pos] = value
                 ultima_pos = zeros+1
 
-        if i == 0:
+        if i == 0 and debug:
             print temp
             print zigzag_order
 
@@ -189,7 +192,7 @@ def zag_zig(bloco_dct_dpcm_zz, zigzag):
 
         bloco_1D_ordenado = bloco_1D_ordenado.reshape((8, 8))
 
-        if i == 0:
+        if i == 0 and debug:
             print bloco_1D_ordenado
 
         bloco_dct_dpcm.append(bloco_1D_ordenado)
@@ -354,7 +357,7 @@ def main():
     print bloco_dct_dpcm[0]
 
     # codificacao ac
-    bloco_dct_dpcm_zz = zig_zag(bloco_dct_dpcm, zigzag)
+    bloco_dct_dpcm_zz = zig_zag(bloco_dct_dpcm, zigzag, False)
 
 
     #x_desc = revert_to_original_block(bloco_dct_dpcm_zz, x.shape)
@@ -363,7 +366,7 @@ def main():
     #k = cv2.waitKey(0) & 0xFF
 
     # descodificacao ac
-    bloco_dct_dpcm = zag_zig(bloco_dct_dpcm_zz, zigzag)
+    bloco_dct_dpcm = zag_zig(bloco_dct_dpcm_zz, zigzag, False)
 
 
     # Descodificação parametro DC
