@@ -99,7 +99,7 @@ def desc_dpcm(bloco_dct_dpcm):
 # 4
 
 """
- Construa uma função (codiﬁcador) que crie um array com a indexação em zig-zag dos coeﬁcientes AC após a
+Construa uma função (codiﬁcador) que crie um array com a indexação em zig-zag dos coeﬁcientes AC após a
 quantiﬁcação e crie um array com os pares (zero run length, nonzero value).
 Construa a função inversa para o descodiﬁcador.
 Junte estas funções às já realizadas e veja a imagem descodiﬁcada.
@@ -206,6 +206,32 @@ def zag_zig(bloco_dct_dpcm_zz, zigzag, debug):
 Construa uma função que dados os arrays das alíneas anteriores use as tabelas do código de Huﬀman (tabela K3
 e K5) e grave num ﬁcheiro a sequência de bits correspondente. (não é necessário usar o formato JFIF)
 """
+def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm):
+
+    # import das tabelas de huffman
+    K3 = jpeg.K3
+    K5 = jpeg.K5
+
+    bitStream = ""
+
+    print bloco_dct_dpcm_zz[0]
+    print bloco_dct_dpcm[0]
+
+    for i in xrange(len(bloco_dct_dpcm)):
+        # valor componente DC
+        dc = bloco_dct_dpcm[i][0][0]
+        # O campo Size indica quantos bits codificam o campo amplitude
+        size = len('{0:b}'.format(dc))
+        # adiciona o size ao bitstream recorrendo à codificação de huffman
+        bitStream += K3[size]
+        # amplitude é o valor em binario do componente dc
+        amp = '{0:b}'.format(dc)
+        # adiciona o valor directamente ao bitstream sem codificação de huffman
+        bitStream += amp
+
+
+
+        # .tofile("{}-desc{}".format(path.splitext(f)[0], path.splitext(f)[1]))
 
 # 6
 
@@ -330,8 +356,6 @@ def main():
     zigzag[7] = [35, 36, 48, 49, 57, 58, 62, 63]
 
 
-
-
     x = cv2.imread("samples/Lena.tiff", cv2.IMREAD_GRAYSCALE)
 
     # xi = x.ravel()*1.0
@@ -359,7 +383,11 @@ def main():
     # codificacao ac
     bloco_dct_dpcm_zz = zig_zag(bloco_dct_dpcm, zigzag, False)
 
+    # codificação huffman
+    codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm)
 
+
+    # imprime imagem
     #x_desc = revert_to_original_block(bloco_dct_dpcm_zz, x.shape)
     #print snr(x, x_desc.astype(np.uint8))
     #cv2.imshow("Lena cod alfa = 0", x_desc.astype(np.uint8))
@@ -368,12 +396,10 @@ def main():
     # descodificacao ac
     bloco_dct_dpcm = zag_zig(bloco_dct_dpcm_zz, zigzag, False)
 
-
     # Descodificação parametro DC
     bloco_dct = desc_dpcm(bloco_dct_dpcm)
 
     print bloco_dct_dpcm[0]
-
 
     # descodificação
     for i in xrange(len(lista_blocos)):
@@ -394,7 +420,7 @@ def main():
     cv2.imshow("Lena desc alfa=0", x_rec.astype(np.uint8))
     k = cv2.waitKey(0) & 0xFF
 
-    cv2.imwrite("lena_output.png", x_rec.astype(np.uint8))
+    #cv2.imwrite("lena_output.png", x_rec.astype(np.uint8))
 
 
     # for i in xrange(len(bloco)):
