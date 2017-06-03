@@ -229,6 +229,20 @@ def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm):
         # adiciona o valor directamente ao bitstream sem codificação de huffman
         bitStream += amp
 
+        # analise da componente ac
+        for z in xrange(len(bloco_dct_dpcm_zz[i])):
+            # quantidade de 0s consecutivos
+            runlength = bloco_dct_dpcm_zz[i][z][0]
+            # valor do coeficiente nao nulo
+            value = bloco_dct_dpcm_zz[i][z][1]
+            # o valor é ainda subdividido em size e amp como no dc
+            size = len('{0:b}'.format(value))
+            amp = '{0:b}'.format(value)
+            # o tuplo (runlength, size) é codificado recorrendo a tabela K5 com codigo de Huffman
+            bitStream += K5[(runlength, size)]
+            # o valor é codificado sem huffman
+            bitStream += amp
+
 
 
         # .tofile("{}-desc{}".format(path.splitext(f)[0], path.splitext(f)[1]))
