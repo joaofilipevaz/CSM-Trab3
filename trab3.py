@@ -214,20 +214,25 @@ def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm):
 
     bitStream = ""
 
-    print bloco_dct_dpcm_zz[0]
-    print bloco_dct_dpcm[0]
+    print bloco_dct_dpcm_zz[2]
+    print bloco_dct_dpcm[2]
 
     for i in xrange(len(bloco_dct_dpcm)):
         # valor componente DC
-        dc = bloco_dct_dpcm[i][0][0]
-        # O campo Size indica quantos bits codificam o campo amplitude
-        size = len('{0:b}'.format(dc))
+        dc = int(bloco_dct_dpcm[i][0][0])
+
+        if dc != 0:
+            # O campo Size indica quantos bits codificam o campo amplitude
+            size = len('{0:b}'.format(abs(dc)))
+        else:
+            size = 0
+
         # adiciona o size ao bitstream recorrendo à codificação de huffman
-        bitStream += K3[size]
+        bitStream += K3[size] +" "
         # amplitude é o valor em binario do componente dc
-        amp = '{0:b}'.format(dc)
+        amp = ones_complement(dc, size)
         # adiciona o valor directamente ao bitstream sem codificação de huffman
-        bitStream += amp
+        bitStream += amp +" "
 
         # analise da componente ac
         for z in xrange(len(bloco_dct_dpcm_zz[i])):
@@ -235,15 +240,22 @@ def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm):
             runlength = bloco_dct_dpcm_zz[i][z][0]
             # valor do coeficiente nao nulo
             value = bloco_dct_dpcm_zz[i][z][1]
-            # o valor é ainda subdividido em size e amp como no dc
-            size = len('{0:b}'.format(value))
-            amp = '{0:b}'.format(value)
+
+            if value != 0:
+                # o valor é ainda subdividido em size e amp como no dc
+                size = len('{0:b}'.format(abs(value)))
+                amp = ones_complement(value, size)
+            else:
+                size = 0
+
             # o tuplo (runlength, size) é codificado recorrendo a tabela K5 com codigo de Huffman
-            bitStream += K5[(runlength, size)]
+            bitStream += K5[(runlength, size)] +" "
 
             if value != 0:
                 # o valor é codificado sem huffman
-                bitStream += amp
+                bitStream += amp +" "
+
+    print bitStream
 
 
 
