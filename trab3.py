@@ -77,19 +77,11 @@ def dpcm(bloco_dct):
 
 def desc_dpcm(bloco_dct_dpcm, dc):
 
-    print len(bloco_dct_dpcm)
-    print len(dc)
-
-    # dc = [bloco_dct_dpcm[0][0][0]]
-
     bloco_dct = np.copy(bloco_dct_dpcm)
 
     # DPCM da componente DC
-    for i in xrange(1, len(bloco_dct_dpcm)):
+    for i in xrange(0, len(dc)):
         bloco_dct[i][0][0] = dc[i]
-        dc_value = bloco_dct[i-1][0][0] + bloco_dct_dpcm[i][0][0]
-        bloco_dct[i][0][0] = dc_value
-        dc.append(dc_value)
 
     return bloco_dct
 
@@ -212,6 +204,9 @@ def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm, debug):
     # stream de bits de saida
     bit_stream = ""
 
+    # insere informação sobre a o numero de blocos 8x8 a ler
+    bit_stream += '{0:032b}'.format(len(bloco_dct_dpcm_zz))
+
     for i in xrange(len(bloco_dct_dpcm)):
         # valor componente DC
         dc = int(bloco_dct_dpcm[i][0][0])
@@ -245,16 +240,15 @@ def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm, debug):
                 # o valor é ainda subdividido em size e amp como no dc
                 size = len('{0:b}'.format(abs(value)))
                 amp_ac = ones_complement(value, size)
+                # o tuplo (runlength, size) é codificado recorrendo a tabela K5 com codigo de Huffman
+                bit_stream += K5[(runlength, size)]  # + " "
+                # o valor é codificado sem huffman
+                bit_stream += amp_ac  # + " "
 
             else:
                 size = 0
-
-            # o tuplo (runlength, size) é codificado recorrendo a tabela K5 com codigo de Huffman
-            bit_stream += K5[(runlength, size)]  # + " "
-
-            if value != 0:
-                # o valor é codificado sem huffman
-                bit_stream += amp_ac  # + " "
+                # o tuplo (runlength, size) é codificado recorrendo a tabela K5 com codigo de Huffman
+                bit_stream += K5[(runlength, size)]  # + " "
 
     if debug:
         print bit_stream
@@ -282,14 +276,18 @@ def le_huff():
     # Sequencia de bits com a codificação da mensagem
     seqbits = ler("Lena_Cod.huf")
 
+    # le o primeiro bloco de 32 bits com a informação sobre o numero de blocos 8x8 a ler
+    n_blocos = int(seqbits[0:32], 2)
+    seqbits = seqbits[32:]
+
     # lista bidimensional com a totalidade dos ac dos blocos
     bloco_dct_dpcm_zz = []
 
+    # loops de (15,0) para serem retirados
     zero_run_loops = 0
 
     # lê os bits codificados enquanto houver dados para leitura
-    while len(seqbits) != 0:
-        print len(seqbits)
+    for z in xrange(n_blocos):
         # flag end of block
         eob = False
         # le o dc
@@ -611,37 +609,38 @@ def main():
     print "O saldo da compressão foi de {} Kb".format(round((size_ini - size_end) / 1024., 2))
 
     # imprime imagem
-    # x_desc = revert_to_original_block(bloco_dct_dpcm_zz, x.shape)
+    x_desc = revert_to_original_block(bloco_dct_dpcm, x.shape)
     # print snr(x, x_desc.astype(np.uint8))
-    # cv2.imshow("Lena cod alfa = 0", x_desc.astype(np.uint8))
-    # k = cv2.waitKey(0) & 0xFF
+    cv2.imshow("Lena cod alfa = 0", x_desc.astype(np.uint8))
+    k = cv2.waitKey(0) & 0xFF
 
     # leitura do ficheiro e reconstrução do ac e dc
-    dc, bloco_dct_dpcm_zz = le_huff()
+    dc, bloco_desc_dct_dpcm_zz = le_huff()
 
     t5 = time()
     print "O tempo necessário para a leitura do ficheiro e reconstrução do ac e dc foi de {} " \
           "segundos".format(round(t5 - t4, 3))
 
     # descodificacao ac
-    bloco_dct_dpcm = zag_zig(bloco_dct_dpcm_zz, zigzag, debug)
+    bloco_desc_dct_dpcm = zag_zig(bloco_desc_dct_dpcm_zz, zigzag, debug)
 
     t6 = time()
     print "O tempo necessário para a descodificacao ac foi de {} segundos".format(round(t6 - t5, 3))
 
     # Descodificação parametro DC
-    bloco_dct = desc_dpcm(bloco_dct_dpcm, dc)
+    bloco_desc_dct = desc_dpcm(bloco_desc_dct_dpcm, dc)
 
     t7 = time()
     print "O tempo necessário para a descodificacao dc foi de {} segundos".format(round(t7 - t6, 3))
 
     if debug:
-        print bloco_dct_dpcm[0]
+        print bloco_desc_dct_dpcm[0]
+        print bloco_desc_dct[0]
 
     # descodificação
     for i in xrange(len(lista_blocos)):
 
-        bloco = descodificador(bloco_dct[i], k1, alfa)
+        bloco = descodificador(bloco_desc_dct[i], k1, alfa)
 
         bloco_rec.append(bloco)
 
@@ -656,9 +655,9 @@ def main():
     # print snr(x, x_rec.astype(np.uint8))
     # print np.all(x == np.rint(x_rec))
     cv2.imshow("Lena desc alfa=0", x_rec.astype(np.uint8))
-    # k = cv2.waitKey(0) & 0xFF
+    k = cv2.waitKey(0) & 0xFF
 
-    # cv2.imwrite("lena_output.png", x_rec.astype(np.uint8))
+    cv2.imwrite("lena_output.png", x_rec.astype(np.uint8))
 
     print "========================================================================================================"
     print "========================================================================================================"
