@@ -28,10 +28,6 @@ def codificador(bloco, k1, alfa):
 
     # quantificação
     dct_quant = np.round(bloco_dct / (k1 * alfa))
-    # bloco_dct * dct_quant = (k1 * alfa)
-    #(bloco_dct * dct_quant) / alfa = k1
-    # dct_quant / alfa = k1 / bloco_dct
-    # k1 * (dct_quant / alfa) =  bloco_dct
 
     return dct_quant
 
@@ -618,7 +614,7 @@ def main():
     x_desc = revert_to_original_block(bloco_dct_dpcm, x.shape)
     # print snr(x, x_desc.astype(np.uint8))
     cv2.imshow("Lena cod alfa = 0", x_desc.astype(np.uint8))
-    k = cv2.waitKey(0) & 0xFF
+    cv2.waitKey(0) & 0xFF
 
     # leitura do ficheiro e reconstrução do ac e dc
     dc, bloco_desc_dct_dpcm_zz, n_blocos = le_huff()
@@ -661,14 +657,13 @@ def main():
         print lista_blocos[test_block]
         print np.rint(bloco_rec[test_block])
         print lista_blocos[test_block]-bloco_rec[test_block]
-        print np.all(np.rint(bloco_rec) == n_blocos)
 
     x_rec = revert_to_original_block(bloco_rec, x.shape)
 
     # print snr(x, x_rec.astype(np.uint8))
     # print np.all(x == np.rint(x_rec))
     cv2.imshow("Lena desc alfa=0", x_rec.astype(np.uint8))
-    k = cv2.waitKey(0) & 0xFF
+    cv2.waitKey(0) & 0xFF
 
     cv2.imwrite("lena_output.png", x_rec.astype(np.uint8))
 
