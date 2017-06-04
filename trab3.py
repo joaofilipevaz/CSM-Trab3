@@ -105,7 +105,7 @@ def zig_zag(bloco_dct_dpcm, zigzag, debug, test_block):
     # array temporario para guardar os valores ordenaados pela order do zigzag
     temp = np.zeros(64)
 
-    for i in xrange(0, len(bloco_dct_dpcm)):
+    for i in xrange(len(bloco_dct_dpcm)):
         # captura o primeiro bloco 8x8
         bloco_1d = bloco_dct_dpcm[i][:][:].ravel()
 
@@ -114,6 +114,7 @@ def zig_zag(bloco_dct_dpcm, zigzag, debug, test_block):
 
         if i == test_block and debug:
             print bloco_1d
+            print zigzag_order
 
         for z in xrange(0, len(bloco_1d)):
             # guarda o valor no indice correspondente pela ordem do zigzag
@@ -125,7 +126,7 @@ def zig_zag(bloco_dct_dpcm, zigzag, debug, test_block):
         if i == test_block and debug:
             print temp
 
-        for t in xrange(1, len(temp)):
+        for t in xrange(1, len(temp), 1):
             # valida o fim do bloco
             if (temp[t] == 0) and (t == 63):
                 ac.append((0, 0))
@@ -152,7 +153,7 @@ def zag_zig(bloco_dct_dpcm_zz, zigzag, debug, test_block):
     # lista de output 8x8
     bloco_dct_dpcm = []
 
-    for i in xrange(0, len(bloco_dct_dpcm_zz)):
+    for i in xrange(len(bloco_dct_dpcm_zz)):
         ac = bloco_dct_dpcm_zz[i]
 
         if i == test_block and debug:
@@ -162,13 +163,14 @@ def zag_zig(bloco_dct_dpcm_zz, zigzag, debug, test_block):
 
         ultima_pos = 0
 
-        for z in xrange(0, len(ac)):
+        for z in xrange(len(ac)):
 
             zeros = ac[z][0]
             value = ac[z][1]
+
             if value != 0:
                 temp[zeros+1+ultima_pos] = value
-                ultima_pos = zeros+1
+                ultima_pos += zeros+1
 
         if i == test_block and debug:
             print temp
