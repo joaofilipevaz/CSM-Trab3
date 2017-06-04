@@ -7,9 +7,10 @@
 
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from Tables_jpeg import K3, K5
 from time import time
+from os import path
 
 # 1
 
@@ -362,6 +363,7 @@ SNR, taxa de compressão, tempo de compressão e descompressão.
 """
 
 
+# converte a imagem num array de blocos 8x8
 def create_8x8block(array):
     # resultado da divisao modulo 8 pelo comprimento do array
     mod8 = (array.shape[0] % 8) == 0 and (array.shape[1] % 8) == 0
@@ -380,6 +382,7 @@ def create_8x8block(array):
     return lista_blocos
 
 
+# efectua o processo inverso devolvendo a imagem a shape original
 def revert_to_original_block(lista_blocos, original_shape):
 
     array_original = np.zeros(original_shape)
@@ -402,6 +405,7 @@ def quality_factor(q_factor):
     return factor
 
 
+# calcula o valor em binario com recurso ao inverso (complemento de uns) para binario negativo
 def ones_complement(value, size):
     if value >= 0:
         return '{0:b}'.format(value)
@@ -410,6 +414,7 @@ def ones_complement(value, size):
         return bit_lenght.format(2**size - 1 - abs(value))
 
 
+# efectua o procedimento inverso retornado o numero que corresponde ao binario
 def read_ones_complement(bin_number):
     bin_number = list(bin_number)
     if bin_number[0] == "1":
@@ -424,7 +429,7 @@ def read_ones_complement(bin_number):
         bin_number = ''.join(bin_number)
         return -int(bin_number, 2)
 
-
+# funções de leitura e escrita obtidas do trabalho anterior
 """
 Elabore uma função ("escrever") que dada uma sequência de bits (mensagem codiﬁcada) e o nome do ﬁcheiro,
 escreva a sequência de bits para o ﬁcheiro.
@@ -591,6 +596,14 @@ def main():
 
     t4 = time()
     print "O tempo necessário para o bloco de entropy coding (huffman) foi de {} segundos".format(round(t4 - t3, 3))
+
+    size_ini = path.getsize("samples/Lena.tiff")
+    size_end = path.getsize("Lena_Cod.huf")
+
+    print "A dimensão do ficheiro original é de {} Kb".format(round(size_ini / 1024., 2))
+    print "A dimensão do ficheiro codificado é de {} Kb".format(round(size_end / 1024., 2))
+    print "A taxa de compressão conseguida foi de {}".format(1. * size_ini / size_end)
+    print "O saldo da compressão foi de {} Kb".format(round((size_ini - size_end) / 1024., 2))
 
     # imprime imagem
     # x_desc = revert_to_original_block(bloco_dct_dpcm_zz, x.shape)
