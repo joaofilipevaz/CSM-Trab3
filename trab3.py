@@ -8,7 +8,7 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-import Tables_jpeg as jpeg
+from Tables_jpeg import K3, K5
 
 # 1
 
@@ -59,8 +59,8 @@ Construa a função inversa para o descodiﬁcador.
 def dpcm(bloco_dct):
 
     # lista de controlo com os valores originais
-    dc_original = [bloco_dct[i][0][0] for i in xrange(len(bloco_dct))]
-    #dc_original[:] = [x - 128 for x in dc_original]
+    # dc_original = [bloco_dct[i][0][0] for i in xrange(len(bloco_dct))]
+    # dc_original[:] = [x - 128 for x in dc_original]
 
     # lista de controlo com os valores DC diferenciais
     dc = [bloco_dct[0][0][0]]
@@ -117,17 +117,17 @@ def zig_zag(bloco_dct_dpcm, zigzag, debug):
 
     for i in xrange(0, len(bloco_dct_dpcm)):
         # captura o primeiro bloco 8x8
-        bloco_1D = bloco_dct_dpcm[i][:][:].ravel()
+        bloco_1d = bloco_dct_dpcm[i][:][:].ravel()
 
         # lista com os pares (zero run length, nonzero value)
         ac = []
 
         if i == 0 and debug:
-            print bloco_1D
+            print bloco_1d
 
-        for z in xrange(0, len(bloco_1D)):
+        for z in xrange(0, len(bloco_1d)):
             # guarda o valor no indice correspondente pela ordem do zigzag
-            temp[zigzag_order[z]] = bloco_1D[z]
+            temp[zigzag_order[z]] = bloco_1d[z]
 
         # variavel auxiliar para contar o numero de zeros
         zeros = 0
@@ -139,7 +139,8 @@ def zig_zag(bloco_dct_dpcm, zigzag, debug):
             # valida o fim do bloco
             if (temp[t] == 0) and (t == 63):
                 ac.append((0, 0))
-            elif temp[t] == 0:
+            # aplica o limita máximo de 15 zeros consecutivos para nao criar conflitos com a cod huff
+            elif temp[t] == 0 and zeros < 15:
                 zeros += 1
             else:
                 # adiciona o um tuplo (run length code, value)
@@ -183,19 +184,19 @@ def zag_zig(bloco_dct_dpcm_zz, zigzag, debug):
             print temp
             print zigzag_order
 
-        bloco_1D_ordenado = np.zeros(64)
+        bloco_1d_ordenado = np.zeros(64)
 
         for t in xrange(1, len(temp)):
             if temp[t] != 0:
                 # guarda o valor no indice correspondente pela ordem do zigzag
-                bloco_1D_ordenado[np.where(zigzag_order == t)[0][0]] = temp[t]
+                bloco_1d_ordenado[np.where(zigzag_order == t)[0][0]] = temp[t]
 
-        bloco_1D_ordenado = bloco_1D_ordenado.reshape((8, 8))
+        bloco_1d_ordenado = bloco_1d_ordenado.reshape((8, 8))
 
         if i == 0 and debug:
-            print bloco_1D_ordenado
+            print bloco_1d_ordenado
 
-        bloco_dct_dpcm.append(bloco_1D_ordenado)
+        bloco_dct_dpcm.append(bloco_1d_ordenado)
 
     return bloco_dct_dpcm
 
@@ -206,17 +207,15 @@ def zag_zig(bloco_dct_dpcm_zz, zigzag, debug):
 Construa uma função que dados os arrays das alíneas anteriores use as tabelas do código de Huﬀman (tabela K3
 e K5) e grave num ﬁcheiro a sequência de bits correspondente. (não é necessário usar o formato JFIF)
 """
+
+
 def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm):
 
-    # import das tabelas de huffman
-    K3 = jpeg.K3
-    K5 = jpeg.K5
-
     # stream de bits de saida
-    bitStream = ""
+    bit_stream = ""
 
-    print bloco_dct_dpcm_zz[2]
-    print bloco_dct_dpcm[2]
+    # print bloco_dct_dpcm_zz[2]
+    # print bloco_dct_dpcm[2]
 
     for i in xrange(len(bloco_dct_dpcm)):
         # valor componente DC
@@ -229,11 +228,11 @@ def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm):
             size = 0
 
         # adiciona o size ao bitstream recorrendo à codificação de huffman
-        bitStream += K3[size]  # + " "
+        bit_stream += K3[size]  # + " "
         # amplitude é o valor em binario do componente dc
         amp = ones_complement(dc, size)
         # adiciona o valor directamente ao bitstream sem codificação de huffman
-        bitStream += amp  # + " "
+        bit_stream += amp  # + " "
 
         # analise da componente ac
         for z in xrange(len(bloco_dct_dpcm_zz[i])):
@@ -250,23 +249,66 @@ def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm):
                 size = 0
 
             # o tuplo (runlength, size) é codificado recorrendo a tabela K5 com codigo de Huffman
-            bitStream += K5[(runlength, size)]  # + " "
+            bit_stream += K5[(runlength, size)]  # + " "
 
             if value != 0:
                 # o valor é codificado sem huffman
-                bitStream += amp  # + " "
+                bit_stream += amp  # + " "
 
-    print bitStream
+    print bit_stream
 
+    # utiliza a função desenvolvida no trab anterior para escrever para ficheiro
+    escrever(bit_stream, "Lena_Cod.huf")
 
-
-        # .tofile("{}-desc{}".format(path.splitext(f)[0], path.splitext(f)[1]))
 
 # 6
 
 """
 Construa uma função que leia o ﬁcheiro gravado e retorne os arrays com os coeﬁcientes AC e DC.
 """
+
+
+def le_huff():
+
+    # lista com os coeficientes dc
+    dc = []
+
+    # lista com os coeficientes ac
+    ac = []
+
+    # Sequencia de bits com a codificação da mensagem
+    seqbits = ler("Lena_Cod.huf")
+
+    # flag end of block
+    eob = False
+
+    # lê os bits codificados enquanto houver dados para leitura
+    while len(seqbits) != 0:
+        # le o dc
+        for k in K3:
+            # avalia o prefixo inicial de acordo com a chave do dicionario
+            if seqbits.startswith(K3[k]):
+                # slice da mensagem de bits para lermos sempre a partir do inicio
+                seqbits = seqbits[len(K3[k]):]
+                # adiciona o valor a lista dc
+                dc.append(int(seqbits[0:k], 2))
+                # remove o valor lido da mensagem
+                seqbits = seqbits[k:]
+        while not eob:
+            for y in K5:
+                # avalia o prefixo inicial de acordo com a chave do dicionario
+                if seqbits.startswith(K5[y]):
+                    if K5[y] == "1010":
+                        eob = True
+                    print y
+                    print K5[y]
+                    # quando encontramos a chave correta adicionamos o valor ao array de simbolos
+                    ac.append(y)
+                    # e slice da mensagem de bits para lermos sempre a partir do inicio
+                    seqbits = seqbits[len(y):]
+
+    return dc, ac
+
 
 # 7
 
@@ -337,6 +379,76 @@ def ones_complement(value, size):
         bit_lenght = "{" + "0:0{}b".format(str(size)) + "}"
         return bit_lenght.format(2**size - 1 - abs(value))
 
+
+"""
+Elabore uma função ("escrever") que dada uma sequência de bits (mensagem codiﬁcada) e o nome do ﬁcheiro,
+escreva a sequência de bits para o ﬁcheiro.
+"""
+
+def escrever(seqbits, nomeficheiro):
+
+    # array de bytes que irá ser escrito para ficheiro
+    array_bytes = bytearray()
+
+    # assegura que o numero de bits é multiplo de 8 adicionando os bits necessarios
+    # avalia o modulo da divisao por 8 para saber quantos bits estão "livres"
+    n_bits_livres = len(seqbits) % 8
+
+    if n_bits_livres != 0:
+        # enche o resto do byte de 1s
+        seqbits += '1' * (8 - n_bits_livres)
+
+    # insere informação sobre a quantidade de bits de stuffing para permitir a sua remoçao na leitura
+    seqbits += '{0:08b}'.format((8 - n_bits_livres))
+
+    # converte os bits para bytes
+    for i in range(len(seqbits) / 8):
+        # segmento de 8 bits = 1 byte
+        substring = seqbits[i * 8: i * 8 + 8]
+        # adiciona o segmento ao array
+        array_bytes.append(int(substring, base=2))
+
+    # inicializa o ficheiro em modo de escrita
+    f = open("{}".format(nomeficheiro), "wb")
+
+    # escreve os bytes para ficheiro
+    for byte in bytes(array_bytes):
+        f.write(byte)
+
+    # fecha o stream de escrita
+    f.close()
+
+    print "Foram escritos {} bits para ficheiro".format(len(seqbits))
+
+
+"""
+Elabore uma função ("ler") que dado o nome do ﬁcheiro, leia uma sequência de bits (mensagem codiﬁcada)
+contida no ﬁcheiro.
+"""
+
+def ler(nomeficheiro):
+
+    # Sequencia de bits com a codificação da mensagem
+    seqbits = ""
+
+    # with garante tratamento de exepções e close integrado
+    with open("{}".format(nomeficheiro), "rb") as f:
+        # le o byte
+        byte = f.read(1)
+        while byte:
+            # adciona os bits correspondentes do byte à seq de bits
+            seqbits += '{0:08b}'.format(ord(byte))
+            byte = f.read(1)
+
+    print "Foram lidos {} bits do ficheiro".format(len(seqbits))
+
+    # verifica quantos bits foram utilizados para stuffing
+    bits_stuffing = int(seqbits[-8:], 2)
+
+    # remove o campo de informação sobre os bits de stuffing e esses bits
+    seqbits = seqbits[:-8 - bits_stuffing]
+
+    return seqbits
 
 
 # função auxiliar para calcular o SNR
@@ -421,7 +533,7 @@ def main():
     # codificacao ac
     bloco_dct_dpcm_zz = zig_zag(bloco_dct_dpcm, zigzag, False)
 
-    # codificação huffman
+    # codificação huffman e escrita para ficheiro
     codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm)
 
 
@@ -430,6 +542,9 @@ def main():
     #print snr(x, x_desc.astype(np.uint8))
     #cv2.imshow("Lena cod alfa = 0", x_desc.astype(np.uint8))
     #k = cv2.waitKey(0) & 0xFF
+
+    # leitura do ficheiro e reconstrução do ac e dc
+    dc, ac = le_huff()
 
     # descodificacao ac
     bloco_dct_dpcm = zag_zig(bloco_dct_dpcm_zz, zigzag, False)
