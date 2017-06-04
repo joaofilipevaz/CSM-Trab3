@@ -212,6 +212,7 @@ def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm):
     K3 = jpeg.K3
     K5 = jpeg.K5
 
+    # stream de bits de saida
     bitStream = ""
 
     print bloco_dct_dpcm_zz[2]
@@ -228,11 +229,11 @@ def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm):
             size = 0
 
         # adiciona o size ao bitstream recorrendo à codificação de huffman
-        bitStream += K3[size] +" "
+        bitStream += K3[size]  # + " "
         # amplitude é o valor em binario do componente dc
         amp = ones_complement(dc, size)
         # adiciona o valor directamente ao bitstream sem codificação de huffman
-        bitStream += amp +" "
+        bitStream += amp  # + " "
 
         # analise da componente ac
         for z in xrange(len(bloco_dct_dpcm_zz[i])):
@@ -249,11 +250,11 @@ def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm):
                 size = 0
 
             # o tuplo (runlength, size) é codificado recorrendo a tabela K5 com codigo de Huffman
-            bitStream += K5[(runlength, size)] +" "
+            bitStream += K5[(runlength, size)]  # + " "
 
             if value != 0:
                 # o valor é codificado sem huffman
-                bitStream += amp +" "
+                bitStream += amp  # + " "
 
     print bitStream
 
