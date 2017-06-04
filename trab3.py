@@ -34,7 +34,7 @@ def codificador(bloco, k1, alfa):
 
 def descodificador(bloco_dct, k1, alfa):
     # DCT2D inversa (IDCT2D)
-    bloco_rec = bloco_dct * (k1 * alfa)
+    bloco_rec = bloco_dct * (k1 / alfa)
     return cv2.idct(bloco_rec)
 
 
@@ -349,7 +349,7 @@ def le_huff():
                     break
         # print "AC = " + str(bloco_dct_dpcm_zz)
 
-    return dc, bloco_dct_dpcm_zz
+    return dc, bloco_dct_dpcm_zz, n_blocos
 
 
 # 7
@@ -532,7 +532,7 @@ def main():
 
     # variavel que controla o modo de impressao de dados de teste
     debug = True
-    test_block = 3500
+    test_block = 3000
 
     # factor de qualidade q
     q = 50
@@ -568,7 +568,6 @@ def main():
     lista_blocos = create_8x8block(x)
 
     bloco_dct = []
-    bloco_rec = []
 
     t0 = time()
 
@@ -618,7 +617,7 @@ def main():
     k = cv2.waitKey(0) & 0xFF
 
     # leitura do ficheiro e reconstrução do ac e dc
-    dc, bloco_desc_dct_dpcm_zz = le_huff()
+    dc, bloco_desc_dct_dpcm_zz, n_blocos = le_huff()
 
     t5 = time()
     print "O tempo necessário para a leitura do ficheiro e reconstrução do ac e dc foi de {} " \
@@ -639,9 +638,12 @@ def main():
     if debug:
         print bloco_desc_dct_dpcm[test_block]
         print bloco_desc_dct[test_block]
+        print np.all(np.rint(bloco_dct_dpcm[test_block]) == np.rint(bloco_desc_dct[test_block]))
+
+    bloco_rec = []
 
     # descodificação
-    for i in xrange(len(lista_blocos)):
+    for i in xrange(n_blocos):
 
         bloco = descodificador(bloco_desc_dct[i], k1, alfa)
 
@@ -651,7 +653,9 @@ def main():
     print "O tempo necessário para a dct inversa dc foi de {} segundos".format(round(t8 - t7, 3))
 
     if debug:
-        print np.all(np.rint(bloco_rec) == lista_blocos)
+        print bloco_dct[test_block]
+        print np.rint(bloco_rec[test_block])
+        print np.all(np.rint(bloco_rec) == n_blocos)
 
     x_rec = revert_to_original_block(bloco_rec, x.shape)
 
