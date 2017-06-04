@@ -273,42 +273,65 @@ def le_huff():
     # lista com os coeficientes dc
     dc = []
 
-    # lista com os coeficientes ac
+    # lista com os coeficientes ac por bloco
     ac = []
 
     # Sequencia de bits com a codificação da mensagem
     seqbits = ler("Lena_Cod.huf")
 
-    # flag end of block
-    eob = False
+    # lista bidimensional com a totalidade dos ac dos blocos
+    bloco_dct_dpcm_zz = []
 
     # lê os bits codificados enquanto houver dados para leitura
     while len(seqbits) != 0:
+        # flag end of block
+        eob = False
         # le o dc
         for k in K3:
             # avalia o prefixo inicial de acordo com a chave do dicionario
             if seqbits.startswith(K3[k]):
                 # slice da mensagem de bits para lermos sempre a partir do inicio
                 seqbits = seqbits[len(K3[k]):]
-                print int(seqbits[0:k])
                 # adiciona o valor a lista dc
-                dc.append(int(seqbits[0:k], 2))
+                dc.append(read_ones_complement(seqbits[0:k]))
                 # remove o valor lido da mensagem
                 seqbits = seqbits[k:]
+                print "DC =" + str(dc)
+                break
         while not eob:
             for y in K5:
                 # avalia o prefixo inicial de acordo com a chave do dicionario
                 if seqbits.startswith(K5[y]):
                     if K5[y] == "1010":
                         eob = True
-                    print y
-                    print K5[y]
-                    # quando encontramos a chave correta adicionamos o valor ao array de simbolos
-                    ac.append(y)
-                    # e slice da mensagem de bits para lermos sempre a partir do inicio
-                    seqbits = seqbits[len(y):]
 
-    return dc, ac
+                    runlength = y[0]
+                    size = y[1]
+
+                    # e slice da mensagem de bits para lermos sempre a partir do inicio
+                    seqbits = seqbits[len(K5[y]):]
+
+                    if size != 0:
+                        # quando encontramos a chave correta adicionamos o valor ao array de simbolos
+                        # ac.append(y)
+
+                        value = read_ones_complement(seqbits[0:size])
+                        print value
+
+                        # remove o valor lido da mensagem
+                        seqbits = seqbits[size:]
+                        ac.append((runlength, value))
+                    elif eob:
+                        ac.append((0, 0))
+                        bloco_dct_dpcm_zz.append(ac)
+                        ac = []
+                    else:
+                        ac.append((15, 0))
+
+                    break
+        print bloco_dct_dpcm_zz
+
+    return dc, bloco_dct_dpcm_zz
 
 
 # 7
@@ -384,8 +407,7 @@ def ones_complement(value, size):
 def read_ones_complement(bin_number):
     bin_number = list(bin_number)
     if bin_number[0] == "1":
-        bin_number = str(bin_number)
-        ''.join(bin_number)
+        bin_number = ''.join(bin_number)
         return int(bin_number, 2)
     else:
         for i in xrange(len(bin_number)):
@@ -393,7 +415,8 @@ def read_ones_complement(bin_number):
                 bin_number[i] = "1"
             else:
                 bin_number[i] = "0"
-        int(str(bin_number), 2)
+        bin_number = ''.join(bin_number)
+        return -int(bin_number, 2)
 
 
 """
@@ -547,7 +570,7 @@ def main():
     print bloco_dct_dpcm[0]
 
     # codificacao ac
-    bloco_dct_dpcm_zz = zig_zag(bloco_dct_dpcm, zigzag, False)
+    bloco_dct_dpcm_zz = zig_zag(bloco_dct_dpcm, zigzag, True)
 
     # codificação huffman e escrita para ficheiro
     codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm)
