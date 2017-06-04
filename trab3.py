@@ -95,7 +95,7 @@ Junte estas funções às já realizadas e veja a imagem descodiﬁcada.
 """
 
 
-def zig_zag(bloco_dct_dpcm, zigzag, debug):
+def zig_zag(bloco_dct_dpcm, zigzag, debug, test_block):
 
     zigzag_order = zigzag.ravel().astype(np.int8)
 
@@ -112,7 +112,7 @@ def zig_zag(bloco_dct_dpcm, zigzag, debug):
         # lista com os pares (zero run length, nonzero value)
         ac = []
 
-        if i == 0 and debug:
+        if i == test_block and debug:
             print bloco_1d
 
         for z in xrange(0, len(bloco_1d)):
@@ -122,7 +122,7 @@ def zig_zag(bloco_dct_dpcm, zigzag, debug):
         # variavel auxiliar para contar o numero de zeros
         zeros = 0
 
-        if i == 0 and debug:
+        if i == test_block and debug:
             print temp
 
         for t in xrange(1, len(temp)):
@@ -137,7 +137,7 @@ def zig_zag(bloco_dct_dpcm, zigzag, debug):
                 ac.append((zeros, int(temp[t])))
                 zeros = 0
 
-        if i == 0 and debug:
+        if i == test_block and debug:
             print ac
 
         bloco_dct_dpcm_zz.append(ac)
@@ -145,7 +145,7 @@ def zig_zag(bloco_dct_dpcm, zigzag, debug):
     return bloco_dct_dpcm_zz
 
 
-def zag_zig(bloco_dct_dpcm_zz, zigzag, debug):
+def zag_zig(bloco_dct_dpcm_zz, zigzag, debug, test_block):
 
     zigzag_order = zigzag.ravel().astype(np.int8)
 
@@ -155,7 +155,7 @@ def zag_zig(bloco_dct_dpcm_zz, zigzag, debug):
     for i in xrange(0, len(bloco_dct_dpcm_zz)):
         ac = bloco_dct_dpcm_zz[i]
 
-        if i == 0 and debug:
+        if i == test_block and debug:
             print ac
 
         temp = np.zeros(64)
@@ -170,7 +170,7 @@ def zag_zig(bloco_dct_dpcm_zz, zigzag, debug):
                 temp[zeros+1+ultima_pos] = value
                 ultima_pos = zeros+1
 
-        if i == 0 and debug:
+        if i == test_block and debug:
             print temp
             print zigzag_order
 
@@ -183,7 +183,7 @@ def zag_zig(bloco_dct_dpcm_zz, zigzag, debug):
 
         bloco_1d_ordenado = bloco_1d_ordenado.reshape((8, 8))
 
-        if i == 0 and debug:
+        if i == test_block and debug:
             print bloco_1d_ordenado
 
         bloco_dct_dpcm.append(bloco_1d_ordenado)
@@ -530,6 +530,7 @@ def main():
 
     # variavel que controla o modo de impressao de dados de teste
     debug = True
+    test_block = 3500
 
     # factor de qualidade q
     q = 50
@@ -586,10 +587,10 @@ def main():
     print "O tempo necessário para efectuar a codificação DC foi de {} segundos".format(round(t2 - t1, 3))
 
     if debug:
-        print bloco_dct_dpcm[0]
+        print bloco_dct_dpcm[test_block]
 
     # codificacao ac
-    bloco_dct_dpcm_zz = zig_zag(bloco_dct_dpcm, zigzag, debug)
+    bloco_dct_dpcm_zz = zig_zag(bloco_dct_dpcm, zigzag, debug, test_block)
 
     t3 = time()
     print "O tempo necessário para efectuar a codificação AC foi de {} segundos".format(round(t3 - t2, 3))
@@ -622,7 +623,7 @@ def main():
           "segundos".format(round(t5 - t4, 3))
 
     # descodificacao ac
-    bloco_desc_dct_dpcm = zag_zig(bloco_desc_dct_dpcm_zz, zigzag, debug)
+    bloco_desc_dct_dpcm = zag_zig(bloco_desc_dct_dpcm_zz, zigzag, debug, test_block)
 
     t6 = time()
     print "O tempo necessário para a descodificacao ac foi de {} segundos".format(round(t6 - t5, 3))
@@ -634,8 +635,8 @@ def main():
     print "O tempo necessário para a descodificacao dc foi de {} segundos".format(round(t7 - t6, 3))
 
     if debug:
-        print bloco_desc_dct_dpcm[0]
-        print bloco_desc_dct[0]
+        print bloco_desc_dct_dpcm[test_block]
+        print bloco_desc_dct[test_block]
 
     # descodificação
     for i in xrange(len(lista_blocos)):
