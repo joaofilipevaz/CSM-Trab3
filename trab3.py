@@ -290,6 +290,7 @@ def le_huff():
             if seqbits.startswith(K3[k]):
                 # slice da mensagem de bits para lermos sempre a partir do inicio
                 seqbits = seqbits[len(K3[k]):]
+                print int(seqbits[0:k])
                 # adiciona o valor a lista dc
                 dc.append(int(seqbits[0:k], 2))
                 # remove o valor lido da mensagem
@@ -378,6 +379,17 @@ def ones_complement(value, size):
     else:
         bit_lenght = "{" + "0:0{}b".format(str(size)) + "}"
         return bit_lenght.format(2**size - 1 - abs(value))
+
+
+def read_ones_complement(bin_number):
+    if bin_number.startswith("1"):
+        return int(bin_number, 2)
+    else:
+        for i in xrange(len(bin_number)):
+            if bin_number[i] == "0":
+                bin_number[i] = "1"
+            else:
+                bin_number[i] = "0"
 
 
 """
