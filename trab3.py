@@ -75,14 +75,18 @@ def dpcm(bloco_dct):
     return bloco_dct_dpcm
 
 
-def desc_dpcm(bloco_dct_dpcm):
+def desc_dpcm(bloco_dct_dpcm, dc):
 
-    dc = [bloco_dct_dpcm[0][0][0]]
+    print len(bloco_dct_dpcm)
+    print len(dc)
+
+    # dc = [bloco_dct_dpcm[0][0][0]]
 
     bloco_dct = np.copy(bloco_dct_dpcm)
 
     # DPCM da componente DC
     for i in xrange(1, len(bloco_dct_dpcm)):
+        bloco_dct[i][0][0] = dc[i]
         dc_value = bloco_dct[i-1][0][0] + bloco_dct_dpcm[i][0][0]
         bloco_dct[i][0][0] = dc_value
         dc.append(dc_value)
@@ -221,11 +225,12 @@ def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm, debug):
         # adiciona o size ao bitstream recorrendo à codificação de huffman
         bit_stream += K3[size]  # + " "
 
-        # amplitude é o valor em binario do componente dc
-        amp = ones_complement(dc, size)
+        if size != 0:
+            # amplitude é o valor em binario do componente dc
+            amp_dc = ones_complement(dc, size)
 
-        # adiciona o valor directamente ao bitstream sem codificação de huffman
-        bit_stream += amp  # + " "
+            # adiciona o valor directamente ao bitstream sem codificação de huffman
+            bit_stream += amp_dc  # + " "
 
         # analise da componente ac
         for z in xrange(len(bloco_dct_dpcm_zz[i])):
@@ -239,7 +244,7 @@ def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm, debug):
             if value != 0:
                 # o valor é ainda subdividido em size e amp como no dc
                 size = len('{0:b}'.format(abs(value)))
-                amp = ones_complement(value, size)
+                amp_ac = ones_complement(value, size)
 
             else:
                 size = 0
@@ -249,10 +254,11 @@ def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm, debug):
 
             if value != 0:
                 # o valor é codificado sem huffman
-                bit_stream += amp  # + " "
+                bit_stream += amp_ac  # + " "
 
     if debug:
         print bit_stream
+        print len(bit_stream)
 
     # utiliza a função desenvolvida no trab anterior para escrever para ficheiro
     escrever(bit_stream, "Lena_Cod.huf")
@@ -283,6 +289,7 @@ def le_huff():
 
     # lê os bits codificados enquanto houver dados para leitura
     while len(seqbits) != 0:
+        print len(seqbits)
         # flag end of block
         eob = False
         # le o dc
@@ -296,6 +303,8 @@ def le_huff():
                     dc.append(read_ones_complement(seqbits[0:k]))
                     # remove o valor lido da mensagem
                     seqbits = seqbits[k:]
+                else:
+                    dc.append(0)
                 # print "DC =" + str(dc)
                 break
         while not eob:
@@ -328,11 +337,13 @@ def le_huff():
                             ac.append((runlength, value))
                     elif eob:
                         if zero_run_loops > 0:
+
                             zero_run_loops = 0
                         ac.append((0, 0))
                         bloco_dct_dpcm_zz.append(ac)
                         ac = []
                     else:
+
                         zero_run_loops += 1
 
                     break
@@ -449,8 +460,8 @@ def escrever(seqbits, nomeficheiro):
         # enche o resto do byte de 1s
         seqbits += '1' * (8 - n_bits_livres)
 
-    # insere informação sobre a quantidade de bits de stuffing para permitir a sua remoçao na leitura
-    seqbits += '{0:08b}'.format((8 - n_bits_livres))
+        # insere informação sobre a quantidade de bits de stuffing para permitir a sua remoçao na leitura
+        seqbits += '{0:08b}'.format((8 - n_bits_livres))
 
     # converte os bits para bytes
     for i in range(len(seqbits) / 8):
@@ -494,12 +505,6 @@ def ler(nomeficheiro):
 
     print "Foram lidos {} bits do ficheiro".format(len(seqbits))
 
-    # verifica quantos bits foram utilizados para stuffing
-    bits_stuffing = int(seqbits[-8:], 2)
-
-    # remove o campo de informação sobre os bits de stuffing e esses bits
-    seqbits = seqbits[:-8 - bits_stuffing]
-
     return seqbits
 
 
@@ -526,7 +531,7 @@ def main():
           "======="
 
     # variavel que controla o modo de impressao de dados de teste
-    debug = False
+    debug = True
 
     # factor de qualidade q
     q = 50
@@ -625,7 +630,7 @@ def main():
     print "O tempo necessário para a descodificacao ac foi de {} segundos".format(round(t6 - t5, 3))
 
     # Descodificação parametro DC
-    bloco_dct = desc_dpcm(bloco_dct_dpcm)
+    bloco_dct = desc_dpcm(bloco_dct_dpcm, dc)
 
     t7 = time()
     print "O tempo necessário para a descodificacao dc foi de {} segundos".format(round(t7 - t6, 3))
