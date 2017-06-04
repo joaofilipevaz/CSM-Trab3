@@ -373,12 +373,12 @@ def create_8x8block(array):
     # Lista de blocos 8x8
     lista_blocos = []
 
-    if mod8 != True:
+    if not mod8:
         print "Dimensão do array não é multipla de 8"
 
-    for i in xrange(0,array.shape[0], 8):
+    for i in xrange(0, array.shape[0], 8):
         for z in xrange(0, array.shape[1], 8):
-            block = array[i:(i+8),z:(z+8)]
+            block = array[i:(i+8), z:(z+8)]
             lista_blocos.append(block.astype(np.float32))
 
     return lista_blocos
@@ -392,8 +392,8 @@ def revert_to_original_block(lista_blocos, original_shape):
 
     for i in xrange(0, array_original.shape[0], 8):
         for z in xrange(0, array_original.shape[1], 8):
-            array_original[i:(i+8),z:(z+8)] = lista_blocos[count]
-            count+=1
+            array_original[i:(i+8), z:(z+8)] = lista_blocos[count]
+            count += 1
 
     return array_original
 
@@ -433,6 +433,7 @@ def read_ones_complement(bin_number):
 Elabore uma função ("escrever") que dada uma sequência de bits (mensagem codiﬁcada) e o nome do ﬁcheiro,
 escreva a sequência de bits para o ﬁcheiro.
 """
+
 
 def escrever(seqbits, nomeficheiro):
 
@@ -474,6 +475,7 @@ def escrever(seqbits, nomeficheiro):
 Elabore uma função ("ler") que dado o nome do ﬁcheiro, leia uma sequência de bits (mensagem codiﬁcada)
 contida no ﬁcheiro.
 """
+
 
 def ler(nomeficheiro):
 
@@ -554,20 +556,14 @@ def main():
     zigzag[6] = [21, 34, 37, 47, 50, 56, 59, 61]
     zigzag[7] = [35, 36, 48, 49, 57, 58, 62, 63]
 
-
     x = cv2.imread("samples/Lena.tiff", cv2.IMREAD_GRAYSCALE)
 
-    # xi = x.ravel()*1.0
-
     lista_blocos = create_8x8block(x)
-
-    # le o ficheiro especifico
-    # x_lena = np.fromfile("samples/lena_gray_scale.bmp", 'uint8')
 
     bloco_dct = []
     bloco_rec = []
 
-    #DCT e Quantificação
+    # DCT e Quantificação
     for i in xrange(len(lista_blocos)):
 
         bloco = codificador(lista_blocos[i], k1, alfa)
@@ -585,12 +581,11 @@ def main():
     # codificação huffman e escrita para ficheiro
     codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm)
 
-
     # imprime imagem
-    #x_desc = revert_to_original_block(bloco_dct_dpcm_zz, x.shape)
-    #print snr(x, x_desc.astype(np.uint8))
-    #cv2.imshow("Lena cod alfa = 0", x_desc.astype(np.uint8))
-    #k = cv2.waitKey(0) & 0xFF
+    # x_desc = revert_to_original_block(bloco_dct_dpcm_zz, x.shape)
+    # print snr(x, x_desc.astype(np.uint8))
+    # cv2.imshow("Lena cod alfa = 0", x_desc.astype(np.uint8))
+    # k = cv2.waitKey(0) & 0xFF
 
     # leitura do ficheiro e reconstrução do ac e dc
     dc, bloco_dct_dpcm_zz = le_huff()
@@ -612,7 +607,7 @@ def main():
 
     print np.all(np.rint(bloco_rec) == lista_blocos)
 
-    #print np.all(np.rint() == )
+    # print np.all(np.rint() == )
 
     x_rec = revert_to_original_block(bloco_rec, x.shape)
 
@@ -620,10 +615,9 @@ def main():
 
     print np.all(x == np.rint(x_rec))
     cv2.imshow("Lena desc alfa=0", x_rec.astype(np.uint8))
-    k = cv2.waitKey(0) & 0xFF
+    # k = cv2.waitKey(0) & 0xFF
 
-    #cv2.imwrite("lena_output.png", x_rec.astype(np.uint8))
-
+    # cv2.imwrite("lena_output.png", x_rec.astype(np.uint8))
 
     # for i in xrange(len(bloco)):
     # for z in xrange(len(bloco[i])):
