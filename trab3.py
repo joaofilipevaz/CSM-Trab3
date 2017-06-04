@@ -382,7 +382,10 @@ def ones_complement(value, size):
 
 
 def read_ones_complement(bin_number):
-    if bin_number.startswith("1"):
+    bin_number = list(bin_number)
+    if bin_number[0] == "1":
+        bin_number = str(bin_number)
+        ''.join(bin_number)
         return int(bin_number, 2)
     else:
         for i in xrange(len(bin_number)):
@@ -390,6 +393,7 @@ def read_ones_complement(bin_number):
                 bin_number[i] = "1"
             else:
                 bin_number[i] = "0"
+        int(str(bin_number), 2)
 
 
 """
