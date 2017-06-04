@@ -58,10 +58,6 @@ Construa a função inversa para o descodiﬁcador.
 
 def dpcm(bloco_dct):
 
-    # lista de controlo com os valores originais
-    # dc_original = [bloco_dct[i][0][0] for i in xrange(len(bloco_dct))]
-    # dc_original[:] = [x - 128 for x in dc_original]
-
     # lista de controlo com os valores DC diferenciais
     dc = [bloco_dct[0][0][0]]
 
@@ -73,9 +69,6 @@ def dpcm(bloco_dct):
         diff = bloco_dct[i][0][0] - bloco_dct[i-1][0][0]
         bloco_dct_dpcm[i][0][0] = diff
         dc.append(diff)
-
-    # print dc_original
-    # print dc
 
     return bloco_dct_dpcm
 
@@ -91,8 +84,6 @@ def desc_dpcm(bloco_dct_dpcm):
         dc_value = bloco_dct[i-1][0][0] + bloco_dct_dpcm[i][0][0]
         bloco_dct[i][0][0] = dc_value
         dc.append(dc_value)
-
-    # print dc
 
     return bloco_dct
 
@@ -112,6 +103,7 @@ def zig_zag(bloco_dct_dpcm, zigzag, debug):
 
     # lista bidimensional com os ac de cada bloco
     bloco_dct_dpcm_zz = []
+
     # array temporario para guardar os valores ordenaados pela order do zigzag
     temp = np.zeros(64)
 
@@ -209,13 +201,10 @@ e K5) e grave num ﬁcheiro a sequência de bits correspondente. (não é necess
 """
 
 
-def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm):
+def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm, debug):
 
     # stream de bits de saida
     bit_stream = ""
-
-    # print bloco_dct_dpcm_zz[2]
-    # print bloco_dct_dpcm[2]
 
     for i in xrange(len(bloco_dct_dpcm)):
         # valor componente DC
@@ -229,15 +218,19 @@ def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm):
 
         # adiciona o size ao bitstream recorrendo à codificação de huffman
         bit_stream += K3[size]  # + " "
+
         # amplitude é o valor em binario do componente dc
         amp = ones_complement(dc, size)
+
         # adiciona o valor directamente ao bitstream sem codificação de huffman
         bit_stream += amp  # + " "
 
         # analise da componente ac
         for z in xrange(len(bloco_dct_dpcm_zz[i])):
+
             # quantidade de 0s consecutivos
             runlength = bloco_dct_dpcm_zz[i][z][0]
+
             # valor do coeficiente nao nulo
             value = bloco_dct_dpcm_zz[i][z][1]
 
@@ -245,6 +238,7 @@ def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm):
                 # o valor é ainda subdividido em size e amp como no dc
                 size = len('{0:b}'.format(abs(value)))
                 amp = ones_complement(value, size)
+
             else:
                 size = 0
 
@@ -255,7 +249,8 @@ def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm):
                 # o valor é codificado sem huffman
                 bit_stream += amp  # + " "
 
-    print bit_stream
+    if debug:
+        print bit_stream
 
     # utiliza a função desenvolvida no trab anterior para escrever para ficheiro
     escrever(bit_stream, "Lena_Cod.huf")
@@ -573,13 +568,14 @@ def main():
     # codificação parametro DC
     bloco_dct_dpcm = dpcm(bloco_dct)
 
-    print bloco_dct_dpcm[0]
+    if debug:
+        print bloco_dct_dpcm[0]
 
     # codificacao ac
     bloco_dct_dpcm_zz = zig_zag(bloco_dct_dpcm, zigzag, debug)
 
     # codificação huffman e escrita para ficheiro
-    codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm)
+    codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm, debug)
 
     # imprime imagem
     # x_desc = revert_to_original_block(bloco_dct_dpcm_zz, x.shape)
@@ -596,7 +592,8 @@ def main():
     # Descodificação parametro DC
     bloco_dct = desc_dpcm(bloco_dct_dpcm)
 
-    print bloco_dct_dpcm[0]
+    if debug:
+        print bloco_dct_dpcm[0]
 
     # descodificação
     for i in xrange(len(lista_blocos)):
@@ -605,15 +602,15 @@ def main():
 
         bloco_rec.append(bloco)
 
-    print np.all(np.rint(bloco_rec) == lista_blocos)
+    if debug:
+        print np.all(np.rint(bloco_rec) == lista_blocos)
 
     # print np.all(np.rint() == )
 
     x_rec = revert_to_original_block(bloco_rec, x.shape)
 
-    print snr(x, x_rec.astype(np.uint8))
-
-    print np.all(x == np.rint(x_rec))
+    # print snr(x, x_rec.astype(np.uint8))
+    # print np.all(x == np.rint(x_rec))
     cv2.imshow("Lena desc alfa=0", x_rec.astype(np.uint8))
     # k = cv2.waitKey(0) & 0xFF
 
