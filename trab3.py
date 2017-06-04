@@ -24,18 +24,22 @@ Veriﬁque que a imagem é igual à original.
 
 def codificador(bloco, k1, alfa):
     # DCT2D direta
-    bloco_dct = cv2.dct(bloco)
+    bloco_dct = cv2.dct(bloco-128)
 
     # quantificação
     dct_quant = np.round(bloco_dct / (k1 * alfa))
+    # bloco_dct * dct_quant = (k1 * alfa)
+    #(bloco_dct * dct_quant) / alfa = k1
+    # dct_quant / alfa = k1 / bloco_dct
+    # k1 * (dct_quant / alfa) =  bloco_dct
 
     return dct_quant
 
 
-def descodificador(bloco_dct, k1, alfa):
+def descodificador(bloco_desc_dct, k1, alfa):
     # DCT2D inversa (IDCT2D)
-    bloco_rec = bloco_dct * (k1 / alfa)
-    return cv2.idct(bloco_rec)
+    bloco_rec = k1 * (bloco_desc_dct / alfa)
+    return np.round(cv2.idct(bloco_rec))+128
 
 
 # 2
@@ -532,7 +536,7 @@ def main():
 
     # variavel que controla o modo de impressao de dados de teste
     debug = True
-    test_block = 3000
+    test_block = 2500
 
     # factor de qualidade q
     q = 50
@@ -639,6 +643,7 @@ def main():
         print bloco_desc_dct_dpcm[test_block]
         print bloco_desc_dct[test_block]
         print np.all(np.rint(bloco_dct_dpcm[test_block]) == np.rint(bloco_desc_dct[test_block]))
+        print bloco_dct[test_block]
 
     bloco_rec = []
 
@@ -653,8 +658,9 @@ def main():
     print "O tempo necessário para a dct inversa dc foi de {} segundos".format(round(t8 - t7, 3))
 
     if debug:
-        print bloco_dct[test_block]
+        print lista_blocos[test_block]
         print np.rint(bloco_rec[test_block])
+        print lista_blocos[test_block]-bloco_rec[test_block]
         print np.all(np.rint(bloco_rec) == n_blocos)
 
     x_rec = revert_to_original_block(bloco_rec, x.shape)
