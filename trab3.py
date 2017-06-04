@@ -9,6 +9,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from Tables_jpeg import K3, K5
+from time import time
 
 # 1
 
@@ -558,6 +559,8 @@ def main():
     bloco_dct = []
     bloco_rec = []
 
+    t0 = time()
+
     # DCT e Quantificação
     for i in xrange(len(lista_blocos)):
 
@@ -565,8 +568,14 @@ def main():
 
         bloco_dct.append(bloco)
 
+    t1 = time()
+    print "O tempo necessário para efectuar a DCT e a Quantificação foi de {} segundos".format(round(t1 - t0, 3))
+
     # codificação parametro DC
     bloco_dct_dpcm = dpcm(bloco_dct)
+
+    t2 = time()
+    print "O tempo necessário para efectuar a codificação DC foi de {} segundos".format(round(t2 - t1, 3))
 
     if debug:
         print bloco_dct_dpcm[0]
@@ -574,8 +583,14 @@ def main():
     # codificacao ac
     bloco_dct_dpcm_zz = zig_zag(bloco_dct_dpcm, zigzag, debug)
 
+    t3 = time()
+    print "O tempo necessário para efectuar a codificação AC foi de {} segundos".format(round(t3 - t2, 3))
+
     # codificação huffman e escrita para ficheiro
     codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm, debug)
+
+    t4 = time()
+    print "O tempo necessário para o bloco de entropy coding (huffman) foi de {} segundos".format(round(t4 - t3, 3))
 
     # imprime imagem
     # x_desc = revert_to_original_block(bloco_dct_dpcm_zz, x.shape)
@@ -586,11 +601,21 @@ def main():
     # leitura do ficheiro e reconstrução do ac e dc
     dc, bloco_dct_dpcm_zz = le_huff()
 
+    t5 = time()
+    print "O tempo necessário para a leitura do ficheiro e reconstrução do ac e dc foi de {} " \
+          "segundos".format(round(t5 - t4, 3))
+
     # descodificacao ac
     bloco_dct_dpcm = zag_zig(bloco_dct_dpcm_zz, zigzag, debug)
 
+    t6 = time()
+    print "O tempo necessário para a descodificacao ac foi de {} segundos".format(round(t6 - t5, 3))
+
     # Descodificação parametro DC
     bloco_dct = desc_dpcm(bloco_dct_dpcm)
+
+    t7 = time()
+    print "O tempo necessário para a descodificacao dc foi de {} segundos".format(round(t7 - t6, 3))
 
     if debug:
         print bloco_dct_dpcm[0]
@@ -602,10 +627,11 @@ def main():
 
         bloco_rec.append(bloco)
 
+    t8 = time()
+    print "O tempo necessário para a dct inversa dc foi de {} segundos".format(round(t8 - t7, 3))
+
     if debug:
         print np.all(np.rint(bloco_rec) == lista_blocos)
-
-    # print np.all(np.rint() == )
 
     x_rec = revert_to_original_block(bloco_rec, x.shape)
 
@@ -615,10 +641,6 @@ def main():
     # k = cv2.waitKey(0) & 0xFF
 
     # cv2.imwrite("lena_output.png", x_rec.astype(np.uint8))
-
-    # for i in xrange(len(bloco)):
-    # for z in xrange(len(bloco[i])):
-    # (x_lena[0:64].reshape((8, 8)) / Q) * 50
 
     print "========================================================================================================"
     print "========================================================================================================"
