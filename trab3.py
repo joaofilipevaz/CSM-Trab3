@@ -282,6 +282,8 @@ def le_huff():
     # lista bidimensional com a totalidade dos ac dos blocos
     bloco_dct_dpcm_zz = []
 
+    zero_run_loops = 0
+
     # lê os bits codificados enquanto houver dados para leitura
     while len(seqbits) != 0:
         # flag end of block
@@ -292,11 +294,12 @@ def le_huff():
             if seqbits.startswith(K3[k]):
                 # slice da mensagem de bits para lermos sempre a partir do inicio
                 seqbits = seqbits[len(K3[k]):]
-                # adiciona o valor a lista dc
-                dc.append(read_ones_complement(seqbits[0:k]))
-                # remove o valor lido da mensagem
-                seqbits = seqbits[k:]
-                print "DC =" + str(dc)
+                if k > 0:
+                    # adiciona o valor a lista dc
+                    dc.append(read_ones_complement(seqbits[0:k]))
+                    # remove o valor lido da mensagem
+                    seqbits = seqbits[k:]
+                # print "DC =" + str(dc)
                 break
         while not eob:
             for y in K5:
@@ -305,6 +308,7 @@ def le_huff():
                     if K5[y] == "1010":
                         eob = True
 
+                    # obtemos runleght e size
                     runlength = y[0]
                     size = y[1]
 
@@ -312,24 +316,30 @@ def le_huff():
                     seqbits = seqbits[len(K5[y]):]
 
                     if size != 0:
-                        # quando encontramos a chave correta adicionamos o valor ao array de simbolos
-                        # ac.append(y)
-
+                        # obtemos o valor
                         value = read_ones_complement(seqbits[0:size])
-                        print value
 
                         # remove o valor lido da mensagem
                         seqbits = seqbits[size:]
-                        ac.append((runlength, value))
+
+                        # teste para perceber se superamos o limite de runlenght do dicionario
+                        if zero_run_loops > 0:
+                            # se sim temos que levar em conta os zeros que "ficaram para tras"
+                            ac.append((runlength+(15*zero_run_loops), value))
+                            zero_run_loops = 0
+                        else:
+                            ac.append((runlength, value))
                     elif eob:
+                        if zero_run_loops > 0:
+                            zero_run_loops = 0
                         ac.append((0, 0))
                         bloco_dct_dpcm_zz.append(ac)
                         ac = []
                     else:
-                        ac.append((15, 0))
+                        zero_run_loops += 1
 
                     break
-        print bloco_dct_dpcm_zz
+        # print "AC = " + str(bloco_dct_dpcm_zz)
 
     return dc, bloco_dct_dpcm_zz
 
@@ -512,8 +522,8 @@ def main():
     print "================================Analise Ficheiro lena================================" \
           "======="
 
-    # np.random.seed(68)
-    # bloco = np.random.randint(-10, 10, size=(8, 8)) * 1.0
+    # variavel que controla o modo de impressao de dados de teste
+    debug = False
 
     # factor de qualidade q
     q = 50
@@ -570,7 +580,7 @@ def main():
     print bloco_dct_dpcm[0]
 
     # codificacao ac
-    bloco_dct_dpcm_zz = zig_zag(bloco_dct_dpcm, zigzag, True)
+    bloco_dct_dpcm_zz = zig_zag(bloco_dct_dpcm, zigzag, debug)
 
     # codificação huffman e escrita para ficheiro
     codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm)
@@ -583,10 +593,10 @@ def main():
     #k = cv2.waitKey(0) & 0xFF
 
     # leitura do ficheiro e reconstrução do ac e dc
-    dc, ac = le_huff()
+    dc, bloco_dct_dpcm_zz = le_huff()
 
     # descodificacao ac
-    bloco_dct_dpcm = zag_zig(bloco_dct_dpcm_zz, zigzag, False)
+    bloco_dct_dpcm = zag_zig(bloco_dct_dpcm_zz, zigzag, debug)
 
     # Descodificação parametro DC
     bloco_dct = desc_dpcm(bloco_dct_dpcm)
