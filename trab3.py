@@ -34,8 +34,8 @@ def codificador(bloco, k1, alfa):
 
 def descodificador(bloco_desc_dct, k1, alfa):
     # DCT2D inversa (IDCT2D)
-    bloco_rec = k1 * (bloco_desc_dct / alfa)
-    return np.round(cv2.idct(bloco_rec))+128
+    bloco_rec = np.round((k1 * alfa) * bloco_desc_dct)
+    return np.round(cv2.idct(bloco_rec)+128)
 
 
 # 2
@@ -508,21 +508,13 @@ def ler(nomeficheiro):
     return seqbits
 
 
-# função auxiliar para calcular o SNR
-def snr(x, sinal_desquant):
-    # erro de quantificação
-    erro_quant = x - sinal_desquant
+# função auxiliar para calcular o SNR entre a imagem original e a comprimida
+def calculoSNR(imgOrig, imgComp):
+    PSinal = np.sum(imgComp**2.0)
+    PRuido = np.sum((imgComp - imgOrig)**2.0)
+    args = (PSinal/PRuido)
+    return np.round(10.0*np.log10(args), 3)
 
-    # potencia do sinal original
-    p_sinal = np.sum((x ** 2.0) / len(x))
-
-    # potencia do ruido
-    p_erro_quant = np.sum((erro_quant ** 2.0) / len(erro_quant))
-
-    # Signal to Noise Ratio
-    sig_noise_ratio = 10. * np.log10(p_sinal / p_erro_quant)
-
-    return round(sig_noise_ratio, 2)
 
 
 def main():
@@ -531,11 +523,11 @@ def main():
           "======="
 
     # variavel que controla o modo de impressao de dados de teste
-    debug = True
-    test_block = 2500
+    debug = False
+    test_block = 2000
 
     # factor de qualidade q
-    q = 50
+    q = 89
 
     #
     alfa = quality_factor(q)
@@ -563,7 +555,8 @@ def main():
     zigzag[6] = [21, 34, 37, 47, 50, 56, 59, 61]
     zigzag[7] = [35, 36, 48, 49, 57, 58, 62, 63]
 
-    x = cv2.imread("samples/Lena.tiff", cv2.IMREAD_GRAYSCALE)
+    x = cv2.imread("samples/lena_gray.jpeg", cv2.IMREAD_GRAYSCALE)
+    # cv2.imwrite("samples/lena_gray.jpeg", x.astype(np.uint8))
 
     lista_blocos = create_8x8block(x)
 
@@ -602,19 +595,11 @@ def main():
     t4 = time()
     print "O tempo necessário para o bloco de entropy coding (huffman) foi de {} segundos".format(round(t4 - t3, 3))
 
-    size_ini = path.getsize("samples/Lena.tiff")
-    size_end = path.getsize("Lena_Cod.huf")
-
-    print "A dimensão do ficheiro original é de {} Kb".format(round(size_ini / 1024., 2))
-    print "A dimensão do ficheiro codificado é de {} Kb".format(round(size_end / 1024., 2))
-    print "A taxa de compressão conseguida foi de {}".format(1. * size_ini / size_end)
-    print "O saldo da compressão foi de {} Kb".format(round((size_ini - size_end) / 1024., 2))
-
     # imprime imagem
-    x_desc = revert_to_original_block(bloco_dct_dpcm, x.shape)
+    # x_desc = revert_to_original_block(bloco_dct_dpcm, x.shape)
     # print snr(x, x_desc.astype(np.uint8))
-    cv2.imshow("Lena cod alfa = 0", x_desc.astype(np.uint8))
-    cv2.waitKey(0) & 0xFF
+    # cv2.imshow("Lena cod alfa = 0", x_desc.astype(np.uint8))
+    # cv2.waitKey(0) & 0xFF
 
     # leitura do ficheiro e reconstrução do ac e dc
     dc, bloco_desc_dct_dpcm_zz, n_blocos = le_huff()
@@ -637,7 +622,7 @@ def main():
 
     if debug:
         print bloco_desc_dct_dpcm[test_block]
-        print bloco_desc_dct[test_block]
+        print bloco_dct[test_block]
         print np.all(np.rint(bloco_dct_dpcm[test_block]) == np.rint(bloco_desc_dct[test_block]))
         print bloco_dct[test_block]
 
@@ -660,12 +645,20 @@ def main():
 
     x_rec = revert_to_original_block(bloco_rec, x.shape)
 
-    # print snr(x, x_rec.astype(np.uint8))
-    # print np.all(x == np.rint(x_rec))
-    cv2.imshow("Lena desc alfa=0", x_rec.astype(np.uint8))
-    cv2.waitKey(0) & 0xFF
+    # cv2.imshow("Lena desc alfa=0", x_rec.astype(np.uint8))
+    # cv2.waitKey(0) & 0xFF
 
-    cv2.imwrite("lena_output.png", x_rec.astype(np.uint8))
+    print "factor q = " + str(q)
+    print "alfa = " + str(alfa)
+    print "SNR = " + str(calculoSNR(x, x_rec))
+    size_ini = path.getsize("samples/lena_gray.jpeg")
+    size_end = path.getsize("lena_output.jpeg")
+    print "A dimensão do ficheiro original é de {} Kb".format(round(size_ini / 1024., 2))
+    print "A dimensão do ficheiro codificado é de {} Kb".format(round(size_end / 1024., 2))
+    print "A taxa de compressão conseguida foi de {}".format(1. * size_ini / size_end)
+    print "O saldo da compressão foi de {} Kb".format(round((size_ini - size_end) / 1024., 2))
+
+    cv2.imwrite("lena_output.jpeg", x_rec.astype(np.uint8))
 
     print "========================================================================================================"
     print "========================================================================================================"
