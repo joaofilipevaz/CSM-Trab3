@@ -308,6 +308,7 @@ def le_huff():
                 # print "DC =" + str(dc)
                 break
         while not eob:
+            print "loop"
             for y in K5:
                 # avalia o prefixo inicial de acordo com a chave do dicionario
                 if seqbits.startswith(K5[y]):
@@ -337,18 +338,15 @@ def le_huff():
                             ac.append((runlength, value))
                     elif eob:
                         if zero_run_loops > 0:
-
                             zero_run_loops = 0
                         ac.append((0, 0))
                         bloco_dct_dpcm_zz.append(ac)
                         ac = []
                     else:
-
                         zero_run_loops += 1
-
                     break
         # print "AC = " + str(bloco_dct_dpcm_zz)
-
+    print "done"
     return dc, bloco_dct_dpcm_zz, n_blocos
 
 
@@ -460,8 +458,8 @@ def escrever(seqbits, nomeficheiro):
         # enche o resto do byte de 1s
         seqbits += '1' * (8 - n_bits_livres)
 
-        # insere informação sobre a quantidade de bits de stuffing para permitir a sua remoçao na leitura
-        seqbits += '{0:08b}'.format((8 - n_bits_livres))
+    # insere informação sobre a quantidade de bits de stuffing para permitir a sua remoçao na leitura
+    seqbits += '{0:08b}'.format((8 - n_bits_livres))
 
     # converte os bits para bytes
     for i in range(len(seqbits) / 8):
@@ -505,6 +503,14 @@ def ler(nomeficheiro):
 
     print "Foram lidos {} bits do ficheiro".format(len(seqbits))
 
+    # verifica quantos bits foram utilizados para stuffing
+    bits_stuffing = int(seqbits[-8:], 2)
+
+    # remove o campo de informação sobre os bits de stuffing e esses bits
+    seqbits = seqbits[:-8-bits_stuffing]
+
+    print len(seqbits)
+
     return seqbits
 
 
@@ -523,11 +529,11 @@ def main():
           "======="
 
     # variavel que controla o modo de impressao de dados de teste
-    debug = False
-    test_block = 2000
+    debug = True
+    test_block = 1000
 
     # factor de qualidade q
-    q = 89
+    q = 50
 
     #
     alfa = quality_factor(q)
@@ -648,6 +654,8 @@ def main():
     # cv2.imshow("Lena desc alfa=0", x_rec.astype(np.uint8))
     # cv2.waitKey(0) & 0xFF
 
+    cv2.imwrite("lena_output.jpeg", x_rec.astype(np.uint8))
+
     print "factor q = " + str(q)
     print "alfa = " + str(alfa)
     print "SNR = " + str(calculoSNR(x, x_rec))
@@ -657,8 +665,6 @@ def main():
     print "A dimensão do ficheiro codificado é de {} Kb".format(round(size_end / 1024., 2))
     print "A taxa de compressão conseguida foi de {}".format(1. * size_ini / size_end)
     print "O saldo da compressão foi de {} Kb".format(round((size_ini - size_end) / 1024., 2))
-
-    cv2.imwrite("lena_output.jpeg", x_rec.astype(np.uint8))
 
     print "========================================================================================================"
     print "========================================================================================================"
