@@ -149,15 +149,9 @@ def zig_zag(bloco_dct_dpcm, zigzag, debug, test_block):
     return bloco_dct_dpcm_zz
 
 
-
-
 def zag_zig(acs, zigzag, debug, test_block):
 
-    zigzag_order = zigzag.ravel().astype(np.int8)
-
-    ind_O = zigzag.reshape((64), order='F').astype('int')
-
-    # ac[ind_O].reshape((8, 8), order='F')
+    ind_O = zigzag.reshape(64, order='F').astype('int')
 
     # lista de output 8x8
     bloco_dct_dpcm = []
@@ -188,15 +182,14 @@ def zag_zig(acs, zigzag, debug, test_block):
         if i == test_block and debug:
             print "array temp"
             print temp
-            print zigzag_order
             print ind_O
 
-        #bloco_1d_ordenado = np.zeros(64)
+            #bloco_1d_ordenado = np.zeros(64)
 
-        # for t in xrange(1, len(temp)):
-         #   if temp[t] != 0:
-         #       # guarda o valor no indice correspondente pela ordem do zigzag
-         #       bloco_1d_ordenado[np.where(zigzag_order == t)[0][0]] = temp[t]
+            # for t in xrange(1, len(temp)):
+            #   if temp[t] != 0:
+            #       # guarda o valor no indice correspondente pela ordem do zigzag
+            #       bloco_1d_ordenado[np.where(zigzag_order == t)[0][0]] = temp[t]
 
         #bloco_1d_ordenado = bloco_1d_ordenado.reshape((8, 8))
 
@@ -299,6 +292,8 @@ def le_huff():
     n_blocos = int(seqbits[0:32], 2)
     seqbits = seqbits[32:]
 
+    print "o numero de blocos é " + str(n_blocos)
+
     # lista bidimensional com a totalidade dos ac dos blocos
     bloco_dct_dpcm_zz = []
 
@@ -307,8 +302,8 @@ def le_huff():
 
     # lê os bits codificados enquanto houver dados para leitura
     for z in xrange(n_blocos):
-        if z == 1295:
-            print ""
+        #if z == 1295:
+        #    print ""
         # flag end of block
         eob = False
         # le o dc
@@ -364,7 +359,7 @@ def le_huff():
                     else:
                         zero_run_loops += 1
                     break
-        # print "AC = " + str(bloco_dct_dpcm_zz)
+                    # print "AC = " + str(bloco_dct_dpcm_zz)
     print "done"
     return dc, bloco_dct_dpcm_zz, n_blocos
 
@@ -526,7 +521,7 @@ def ler(nomeficheiro):
     bits_stuffing = int(seqbits[-8:], 2)
 
     # remove o campo de informação sobre os bits de stuffing e esses bits
-    seqbits = seqbits[:-8-bits_stuffing]
+    seqbits = seqbits[:-(bits_stuffing+8)]
 
     print len(seqbits)
 
@@ -552,7 +547,7 @@ def main():
     test_block = 1295
 
     # factor de qualidade q
-    q = 90
+    q = 75
 
     #
     alfa = quality_factor(q)
