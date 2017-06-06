@@ -149,44 +149,58 @@ def zig_zag(bloco_dct_dpcm, zigzag, debug, test_block):
     return bloco_dct_dpcm_zz
 
 
-def zag_zig(bloco_dct_dpcm_zz, zigzag, debug, test_block):
+
+
+def zag_zig(acs, zigzag, debug, test_block):
 
     zigzag_order = zigzag.ravel().astype(np.int8)
+
+    ind_O = zigzag.reshape((64), order='F').astype('int')
+
+    # ac[ind_O].reshape((8, 8), order='F')
 
     # lista de output 8x8
     bloco_dct_dpcm = []
 
-    for i in xrange(len(bloco_dct_dpcm_zz)):
-        ac = bloco_dct_dpcm_zz[i]
+    for i in xrange(len(acs)):
+
+        ac_block = acs[i]
 
         if i == test_block and debug:
-            print ac
+            print ac_block
 
         temp = np.zeros(64)
 
         ultima_pos = 0
 
-        for z in xrange(len(ac)):
+        for z in xrange(len(ac_block)):
 
-            zeros = ac[z][0]
-            value = ac[z][1]
+            zeros = ac_block[z][0]
+            value = ac_block[z][1]
 
             if value != 0:
+                if zeros+1+ultima_pos >= 64:
+                    print ac_block[z]
                 temp[zeros+1+ultima_pos] = value
                 ultima_pos += zeros+1
 
+
         if i == test_block and debug:
+            print "array temp"
             print temp
             print zigzag_order
+            print ind_O
 
-        bloco_1d_ordenado = np.zeros(64)
+        #bloco_1d_ordenado = np.zeros(64)
 
-        for t in xrange(1, len(temp)):
-            if temp[t] != 0:
-                # guarda o valor no indice correspondente pela ordem do zigzag
-                bloco_1d_ordenado[np.where(zigzag_order == t)[0][0]] = temp[t]
+        # for t in xrange(1, len(temp)):
+         #   if temp[t] != 0:
+         #       # guarda o valor no indice correspondente pela ordem do zigzag
+         #       bloco_1d_ordenado[np.where(zigzag_order == t)[0][0]] = temp[t]
 
-        bloco_1d_ordenado = bloco_1d_ordenado.reshape((8, 8))
+        #bloco_1d_ordenado = bloco_1d_ordenado.reshape((8, 8))
+
+        bloco_1d_ordenado = temp[ind_O].reshape((8, 8), order='F')
 
         if i == test_block and debug:
             print bloco_1d_ordenado
@@ -293,6 +307,8 @@ def le_huff():
 
     # lê os bits codificados enquanto houver dados para leitura
     for z in xrange(n_blocos):
+        if z == 1295:
+            print ""
         # flag end of block
         eob = False
         # le o dc
@@ -533,10 +549,10 @@ def main():
 
     # variavel que controla o modo de impressao de dados de teste
     debug = True
-    test_block = 1000
+    test_block = 1295
 
     # factor de qualidade q
-    q = 50
+    q = 90
 
     #
     alfa = quality_factor(q)
@@ -612,7 +628,7 @@ def main():
     cv2.waitKey(0) & 0xFF
 
     # leitura do ficheiro e reconstrução do ac e dc
-    dc, bloco_desc_dct_dpcm_zz, n_blocos = le_huff()
+    dc, ac, n_blocos = le_huff()
 
     if debug:
         print "o valor do DC descodificado é igual ao codificado = " + str(dc == dc_cod)
@@ -622,7 +638,7 @@ def main():
           "segundos".format(round(t5 - t4, 3))
 
     # descodificacao ac
-    bloco_desc_dct_dpcm = zag_zig(bloco_desc_dct_dpcm_zz, zigzag, debug, test_block)
+    bloco_desc_dct_dpcm = zag_zig(ac, zigzag, debug, test_block)
 
     t6 = time()
     print "O tempo necessário para a descodificacao ac foi de {} segundos".format(round(t6 - t5, 3))
@@ -660,7 +676,7 @@ def main():
     cv2.imshow("Lena descodificada alfa = {}".format(alfa), x_rec.astype(np.uint8))
     cv2.waitKey(0) & 0xFF
 
-    cv2.imwrite("Lena descodificada alfa = {}".format(alfa), x_rec.astype(np.uint8))
+    cv2.imwrite("Lena descodificada alfa = {}.jpeg".format(alfa), x_rec.astype(np.uint8))
 
     print "factor q = " + str(q)
     print "alfa = " + str(alfa)
