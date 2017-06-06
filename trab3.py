@@ -72,16 +72,19 @@ def dpcm(bloco_dct):
         bloco_dct_dpcm[i][0][0] = diff
         dc.append(diff)
 
-    return bloco_dct_dpcm
+    return bloco_dct_dpcm, dc
 
 
 def desc_dpcm(bloco_dct_dpcm, dc):
 
     bloco_dct = np.copy(bloco_dct_dpcm)
 
+    dcanterior = 0
+
     # DPCM da componente DC
     for i in xrange(0, len(dc)):
-        bloco_dct[i][0][0] = dc[i]
+        bloco_dct[i][0][0] = dc[i] + dcanterior
+        dcanterior = bloco_dct[i][0][0]
 
     return bloco_dct
 
@@ -308,7 +311,7 @@ def le_huff():
                 # print "DC =" + str(dc)
                 break
         while not eob:
-            print "loop"
+            # print "loop"
             for y in K5:
                 # avalia o prefixo inicial de acordo com a chave do dicionario
                 if seqbits.startswith(K5[y]):
@@ -561,7 +564,7 @@ def main():
     zigzag[6] = [21, 34, 37, 47, 50, 56, 59, 61]
     zigzag[7] = [35, 36, 48, 49, 57, 58, 62, 63]
 
-    x = cv2.imread("samples/lena_gray.jpeg", cv2.IMREAD_GRAYSCALE)
+    x = cv2.imread("samples/lena.tiff", cv2.IMREAD_GRAYSCALE)
     # cv2.imwrite("samples/lena_gray.jpeg", x.astype(np.uint8))
 
     lista_blocos = create_8x8block(x)
@@ -581,12 +584,13 @@ def main():
     print "O tempo necessário para efectuar a DCT e a Quantificação foi de {} segundos".format(round(t1 - t0, 3))
 
     # codificação parametro DC
-    bloco_dct_dpcm = dpcm(bloco_dct)
+    bloco_dct_dpcm, dc_cod = dpcm(bloco_dct)
 
     t2 = time()
     print "O tempo necessário para efectuar a codificação DC foi de {} segundos".format(round(t2 - t1, 3))
 
     if debug:
+        print lista_blocos[test_block]
         print bloco_dct_dpcm[test_block]
 
     # codificacao ac
@@ -602,13 +606,16 @@ def main():
     print "O tempo necessário para o bloco de entropy coding (huffman) foi de {} segundos".format(round(t4 - t3, 3))
 
     # imprime imagem
-    # x_desc = revert_to_original_block(bloco_dct_dpcm, x.shape)
+    x_desc = revert_to_original_block(bloco_dct_dpcm, x.shape)
     # print snr(x, x_desc.astype(np.uint8))
-    # cv2.imshow("Lena cod alfa = 0", x_desc.astype(np.uint8))
-    # cv2.waitKey(0) & 0xFF
+    cv2.imshow("Lena cod alfa = 0", x_desc.astype(np.uint8))
+    cv2.waitKey(0) & 0xFF
 
     # leitura do ficheiro e reconstrução do ac e dc
     dc, bloco_desc_dct_dpcm_zz, n_blocos = le_huff()
+
+    if debug:
+        print "o valor do DC descodificado é igual ao codificado = " + str(dc == dc_cod)
 
     t5 = time()
     print "O tempo necessário para a leitura do ficheiro e reconstrução do ac e dc foi de {} " \
@@ -630,7 +637,6 @@ def main():
         print bloco_desc_dct_dpcm[test_block]
         print bloco_dct[test_block]
         print np.all(np.rint(bloco_dct_dpcm[test_block]) == np.rint(bloco_desc_dct[test_block]))
-        print bloco_dct[test_block]
 
     bloco_rec = []
 
@@ -651,10 +657,10 @@ def main():
 
     x_rec = revert_to_original_block(bloco_rec, x.shape)
 
-    # cv2.imshow("Lena desc alfa=0", x_rec.astype(np.uint8))
-    # cv2.waitKey(0) & 0xFF
+    cv2.imshow("Lena descodificada alfa = {}".format(alfa), x_rec.astype(np.uint8))
+    cv2.waitKey(0) & 0xFF
 
-    cv2.imwrite("lena_output.jpeg", x_rec.astype(np.uint8))
+    cv2.imwrite("Lena descodificada alfa = {}".format(alfa), x_rec.astype(np.uint8))
 
     print "factor q = " + str(q)
     print "alfa = " + str(alfa)
