@@ -302,10 +302,14 @@ def le_huff():
 
     # lê os bits codificados enquanto houver dados para leitura
     for z in xrange(n_blocos):
-        #if z == 1295:
-        #    print ""
+
+        if z == 4088:
+            print "vamos testar esta merda"
+
         # flag end of block
         eob = False
+        print z
+
         # le o dc
         for k in K3:
             # avalia o prefixo inicial de acordo com a chave do dicionario
@@ -547,7 +551,7 @@ def main():
     test_block = 1295
 
     # factor de qualidade q
-    q = 75
+    q = 91
 
     #
     alfa = quality_factor(q)
@@ -647,7 +651,6 @@ def main():
     if debug:
         print bloco_desc_dct_dpcm[test_block]
         print bloco_dct[test_block]
-        print np.all(np.rint(bloco_dct_dpcm[test_block]) == np.rint(bloco_desc_dct[test_block]))
 
     bloco_rec = []
 
