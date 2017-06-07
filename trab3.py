@@ -477,7 +477,7 @@ def escrever(seqbits, nomeficheiro):
         seqbits += '1' * (8 - n_bits_livres)
 
     # insere informação sobre a quantidade de bits de stuffing para permitir a sua remoçao na leitura
-    seqbits += '{0:08b}'.format((8 - n_bits_livres))
+    seqbits += '{0:08b}'.format(n_bits_livres)
 
     # converte os bits para bytes
     for i in range(len(seqbits) / 8):
@@ -522,10 +522,14 @@ def ler(nomeficheiro):
     print "Foram lidos {} bits do ficheiro".format(len(seqbits))
 
     # verifica quantos bits foram utilizados para stuffing
-    bits_stuffing = int(seqbits[-8:], 2)
+    n_bits_livres = int(seqbits[-8:], 2)
 
-    # remove o campo de informação sobre os bits de stuffing e esses bits
-    seqbits = seqbits[:-(bits_stuffing+8)]
+    if n_bits_livres != 0:
+        # remove o campo de informação sobre os bits de stuffing e esses bits
+        seqbits = seqbits[:-((8-n_bits_livres) + 8)]
+    else:
+        # remove o campo de informação sobre os bits de stuffing e esses bits
+        seqbits = seqbits[:-8]
 
     print len(seqbits)
 
