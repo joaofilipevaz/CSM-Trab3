@@ -269,6 +269,8 @@ def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm, debug):
     # utiliza a função desenvolvida no trab anterior para escrever para ficheiro
     escrever(bit_stream, "Lena_Cod.huf")
 
+    return bit_stream
+
 
 # 6
 
@@ -277,7 +279,7 @@ Construa uma função que leia o ﬁcheiro gravado e retorne os arrays com os co
 """
 
 
-def le_huff():
+def le_huff(test_block):
 
     # lista com os coeficientes dc
     dc = []
@@ -303,12 +305,13 @@ def le_huff():
     # lê os bits codificados enquanto houver dados para leitura
     for z in xrange(n_blocos):
 
-        if z == 4088:
+        if z == test_block+1:
             print "vamos testar esta merda"
+            print bloco_dct_dpcm_zz[test_block]
 
         # flag end of block
         eob = False
-        print z
+        #print z
 
         # le o dc
         for k in K3:
@@ -333,16 +336,16 @@ def le_huff():
                     if K5[y] == "1010":
                         eob = True
 
-                    # obtemos runleght e size
+                    # obtemos runlength e size
                     runlength = y[0]
                     size = y[1]
 
-                    # e slice da mensagem de bits para lermos sempre a partir do inicio
+                    # slice da mensagem de bits para lermos sempre a partir do inicio
                     seqbits = seqbits[len(K5[y]):]
 
                     if size != 0:
                         # obtemos o valor
-                        value = read_ones_complement(seqbits[0:size])
+                        amp_ac = read_ones_complement(seqbits[0:size])
 
                         # remove o valor lido da mensagem
                         seqbits = seqbits[size:]
@@ -350,10 +353,10 @@ def le_huff():
                         # teste para perceber se superamos o limite de runlenght do dicionario
                         if zero_run_loops > 0:
                             # se sim temos que levar em conta os zeros que "ficaram para tras"
-                            ac.append((runlength+(15*zero_run_loops), value))
+                            ac.append((runlength+(15*zero_run_loops), amp_ac))
                             zero_run_loops = 0
                         else:
-                            ac.append((runlength, value))
+                            ac.append((runlength, amp_ac))
                     elif eob:
                         if zero_run_loops > 0:
                             zero_run_loops = 0
@@ -362,8 +365,10 @@ def le_huff():
                         ac = []
                     else:
                         zero_run_loops += 1
+
                     break
                     # print "AC = " + str(bloco_dct_dpcm_zz)
+
     print "done"
     return dc, bloco_dct_dpcm_zz, n_blocos
 
@@ -552,10 +557,10 @@ def main():
 
     # variavel que controla o modo de impressao de dados de teste
     debug = True
-    test_block = 1295
+    test_block = 1321
 
     # factor de qualidade q
-    q = 91
+    q = 87
 
     #
     alfa = quality_factor(q)
@@ -619,7 +624,7 @@ def main():
     print "O tempo necessário para efectuar a codificação AC foi de {} segundos".format(round(t3 - t2, 3))
 
     # codificação huffman e escrita para ficheiro
-    codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm, debug)
+    bitstream_cod = codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm, debug)
 
     t4 = time()
     print "O tempo necessário para o bloco de entropy coding (huffman) foi de {} segundos".format(round(t4 - t3, 3))
@@ -630,8 +635,10 @@ def main():
     cv2.imshow("Lena cod alfa = 0", x_desc.astype(np.uint8))
     cv2.waitKey(0) & 0xFF
 
+    print "O bit Stream é valido? = " + str(bitstream_cod == ler("Lena_Cod.huf"))
+
     # leitura do ficheiro e reconstrução do ac e dc
-    dc, ac, n_blocos = le_huff()
+    dc, ac, n_blocos = le_huff(test_block)
 
     if debug:
         print "o valor do DC descodificado é igual ao codificado = " + str(dc == dc_cod)
