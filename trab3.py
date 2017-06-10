@@ -189,15 +189,6 @@ def zag_zig(acs, zigzag, debug, test_block):
             print temp
             print ind_O
 
-            #bloco_1d_ordenado = np.zeros(64)
-
-            # for t in xrange(1, len(temp)):
-            #   if temp[t] != 0:
-            #       # guarda o valor no indice correspondente pela ordem do zigzag
-            #       bloco_1d_ordenado[np.where(zigzag_order == t)[0][0]] = temp[t]
-
-        #bloco_1d_ordenado = bloco_1d_ordenado.reshape((8, 8))
-
         bloco_1d_ordenado = temp[ind_O].reshape((8, 8), order='F')
 
         if i == test_block and debug:
@@ -331,7 +322,6 @@ def le_huff(test_block):
                 # print "DC =" + str(dc)
                 break
         while not eob:
-            #print "loop"
             for y in K5:
                 # avalia o prefixo inicial de acordo com a chave do dicionario
                 if seqbits.startswith(K5[y]):
@@ -549,7 +539,7 @@ def main():
     test_block = 4095
 
     # factor de qualidade q
-    q = 30
+    q = 90
 
     #
     alfa = quality_factor(q)
@@ -675,7 +665,7 @@ def main():
     cv2.imshow("Lena descodificada Q = {}".format(q), x_rec.astype(np.uint8))
     cv2.waitKey(0) & 0xFF
 
-    cv2.imwrite("Lena descodificada Q = {}.jpeg".format(q), x_rec.astype(np.uint8))
+    cv2.imwrite("Lena descodificada Q = {}.jpg".format(q), x_rec.astype(np.uint8))
 
     print "factor q = " + str(q)
     print "alfa = " + str(alfa)
