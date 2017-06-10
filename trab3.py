@@ -129,10 +129,12 @@ def zig_zag(bloco_dct_dpcm, zigzag, debug, test_block):
         if i == test_block and debug:
             print temp
 
+        eob = False
         for t in xrange(1, len(temp), 1):
             # valida o fim do bloco
             if (temp[t] == 0) and zeros >= 15:
                 ac.append((0, 0))
+                eob = True
                 break
             # aplica o limita máximo de 15 zeros consecutivos para nao criar conflitos com a cod huff
             elif temp[t] == 0 and zeros < 15:
@@ -141,6 +143,9 @@ def zig_zag(bloco_dct_dpcm, zigzag, debug, test_block):
                 # adiciona o um tuplo (run length code, value)
                 ac.append((zeros, int(temp[t])))
                 zeros = 0
+
+        if not eob:
+            ac.append((0, 0))
 
         if i == test_block and debug:
             print ac
@@ -344,6 +349,7 @@ def le_huff(test_block, acs):
                         eob = True
                         ac.append((0, 0))
                         bloco_dct_dpcm_zz.append(ac)
+                        #np.append(bloco_dct_dpcm_zz[z], ac)
                         print bloco_dct_dpcm_zz[z]
                         ac = []
                         break
@@ -540,8 +546,8 @@ def ler(nomeficheiro):
 # função auxiliar para calcular o SNR entre a imagem original e a comprimida
 def calculoSNR(imgOrig, imgComp):
     PSinal = np.sum(imgComp**2.0)
-    PRuido = np.sum((imgComp - imgOrig)**2.0)
-    args = (PSinal/PRuido)
+    PRuido = np.sum(np.sum(imgOrig - imgComp)**2.0)
+    args = PSinal / PRuido
     return np.round(10.0*np.log10(args), 3)
 
 
@@ -556,7 +562,7 @@ def main():
     test_block = 4095
 
     # factor de qualidade q
-    q = 65.
+    q = 5
 
     #
     alfa = quality_factor(q)
@@ -678,10 +684,10 @@ def main():
 
     x_rec = revert_to_original_block(bloco_rec, x.shape)
 
-    cv2.imshow("Lena descodificada alfa = {}".format(alfa), x_rec.astype(np.uint8))
+    cv2.imshow("Lena descodificada Q = {}".format(q), x_rec.astype(np.uint8))
     cv2.waitKey(0) & 0xFF
 
-    cv2.imwrite("Lena descodificada alfa = {}.jpeg".format(alfa), x_rec.astype(np.uint8))
+    cv2.imwrite("Lena descodificada Q = {}.jpeg".format(q), x_rec.astype(np.uint8))
 
     print "factor q = " + str(q)
     print "alfa = " + str(alfa)
