@@ -1,7 +1,9 @@
+# This Python file uses the following encoding: utf-8
+
 import numpy as np
-from PIL import Image
+#from PIL import Image
 import cv2
-from scipy.fftpack import dct, idct
+#from scipy.fftpack import dct, idct
 
 #tab_jpeg
 
@@ -267,20 +269,20 @@ def quality_factor(q):
 
 
 
-x = Image.open("lena.tiff")        
+#x = Image.open("lena.tiff")
 #hist = x.histogram()
 #plt.plot(hist)
 
 #Convert image to array
-x_a = np.array(x)
+#x_a = np.array(x)
 
 #give a value between 25 and 75
-qualidade = 50
-factor = quality_factor(qualidade) 
+#qualidade = 50
+#factor = quality_factor(qualidade)
 
-bloco=x_a[:8,:8]
-bloco_dct=cv2.dct(bloco*1.)
-bloco_q = (bloco_dct / (factor*Q)).round()
+#bloco=x_a[:8,:8]
+#bloco_dct=cv2.dct(bloco*1.)
+#bloco_q = (bloco_dct / (factor*Q)).round()
 
 #blocoEstimado= cv2.dct(bloco_dct*1.,[],cv2.DCT_INVERSE)
-blocoEstimado= cv2.idct(bloco_q*(factor*Q) )
+#blocoEstimado= cv2.idct(bloco_q*(factor*Q) )

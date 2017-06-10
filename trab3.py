@@ -8,7 +8,7 @@
 import cv2
 import numpy as np
 # import matplotlib.pyplot as plt
-from Tables_jpeg import K3, K5
+from trab3Test import K3, K5
 from time import time
 from os import path
 
@@ -131,8 +131,9 @@ def zig_zag(bloco_dct_dpcm, zigzag, debug, test_block):
 
         for t in xrange(1, len(temp), 1):
             # valida o fim do bloco
-            if (temp[t] == 0) and (t == 63):
+            if (temp[t] == 0) and zeros >= 15:
                 ac.append((0, 0))
+                break
             # aplica o limita máximo de 15 zeros consecutivos para nao criar conflitos com a cod huff
             elif temp[t] == 0 and zeros < 15:
                 zeros += 1
@@ -177,7 +178,6 @@ def zag_zig(acs, zigzag, debug, test_block):
                     print ac_block[z]
                 temp[zeros+1+ultima_pos] = value
                 ultima_pos += zeros+1
-
 
         if i == test_block and debug:
             print "array temp"
@@ -256,7 +256,6 @@ def codifica_huff(bloco_dct_dpcm_zz, bloco_dct_dpcm, debug):
                 bit_stream += K5[(runlength, size)]  # + " "
                 # o valor é codificado sem huffman
                 bit_stream += amp_ac  # + " "
-
             else:
                 size = 0
                 # o tuplo (runlength, size) é codificado recorrendo a tabela K5 com codigo de Huffman
@@ -279,7 +278,7 @@ Construa uma função que leia o ﬁcheiro gravado e retorne os arrays com os co
 """
 
 
-def le_huff(test_block):
+def le_huff(test_block, acs):
 
     # lista com os coeficientes dc
     dc = []
@@ -300,18 +299,16 @@ def le_huff(test_block):
     bloco_dct_dpcm_zz = []
 
     # loops de (15,0) para serem retirados
-    zero_run_loops = 0
+    count = 0
 
     # lê os bits codificados enquanto houver dados para leitura
     for z in xrange(n_blocos):
 
-        if z == test_block+1:
-            print "vamos testar esta merda"
+        if count == test_block:
             print bloco_dct_dpcm_zz[test_block]
 
         # flag end of block
         eob = False
-        #print z
 
         # le o dc
         for k in K3:
@@ -329,12 +326,10 @@ def le_huff(test_block):
                 # print "DC =" + str(dc)
                 break
         while not eob:
-            # print "loop"
+            #print "loop"
             for y in K5:
                 # avalia o prefixo inicial de acordo com a chave do dicionario
                 if seqbits.startswith(K5[y]):
-                    if K5[y] == "1010":
-                        eob = True
 
                     # obtemos runlength e size
                     runlength = y[0]
@@ -342,6 +337,16 @@ def le_huff(test_block):
 
                     # slice da mensagem de bits para lermos sempre a partir do inicio
                     seqbits = seqbits[len(K5[y]):]
+
+                    if K5[y] == "1010":
+                        if z == 1458:
+                            print "puta que pariu"
+                        eob = True
+                        ac.append((0, 0))
+                        bloco_dct_dpcm_zz.append(ac)
+                        print bloco_dct_dpcm_zz[z]
+                        ac = []
+                        break
 
                     if size != 0:
                         # obtemos o valor
@@ -351,25 +356,16 @@ def le_huff(test_block):
                         seqbits = seqbits[size:]
 
                         # teste para perceber se superamos o limite de runlenght do dicionario
-                        if zero_run_loops > 0:
+                        #if zero_run_loops > 0:
+
                             # se sim temos que levar em conta os zeros que "ficaram para tras"
-                            ac.append((runlength+(15*zero_run_loops), amp_ac))
-                            zero_run_loops = 0
-                        else:
-                            ac.append((runlength, amp_ac))
-                    elif eob:
-                        if zero_run_loops > 0:
-                            zero_run_loops = 0
-                        ac.append((0, 0))
-                        bloco_dct_dpcm_zz.append(ac)
-                        ac = []
-                    else:
-                        zero_run_loops += 1
-
-                    break
-                    # print "AC = " + str(bloco_dct_dpcm_zz)
-
-    print "done"
+                        #    ac.append((runlength+(15*zero_run_loops), amp_ac))
+                        #    zero_run_loops = 0
+                        #else:
+                        ac.append((runlength, amp_ac))
+        print str(z) + " : " + str(bloco_dct_dpcm_zz[z] == acs[z])
+        print bloco_dct_dpcm_zz[z]
+        print acs[z]
     return dc, bloco_dct_dpcm_zz, n_blocos
 
 
@@ -557,10 +553,10 @@ def main():
 
     # variavel que controla o modo de impressao de dados de teste
     debug = True
-    test_block = 1321
+    test_block = 4095
 
     # factor de qualidade q
-    q = 87
+    q = 65.
 
     #
     alfa = quality_factor(q)
@@ -638,7 +634,7 @@ def main():
     print "O bit Stream é valido? = " + str(bitstream_cod == ler("Lena_Cod.huf"))
 
     # leitura do ficheiro e reconstrução do ac e dc
-    dc, ac, n_blocos = le_huff(test_block)
+    dc, ac, n_blocos = le_huff(test_block, bloco_dct_dpcm_zz)
 
     if debug:
         print "o valor do DC descodificado é igual ao codificado = " + str(dc == dc_cod)
