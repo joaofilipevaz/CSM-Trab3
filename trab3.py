@@ -283,7 +283,7 @@ Construa uma função que leia o ﬁcheiro gravado e retorne os arrays com os co
 """
 
 
-def le_huff(test_block, acs):
+def le_huff(test_block):
 
     # lista com os coeficientes dc
     dc = []
