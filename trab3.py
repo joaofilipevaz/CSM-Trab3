@@ -533,7 +533,7 @@ def ler(nomeficheiro):
 # função auxiliar para calcular o SNR entre a imagem original e a comprimida
 def calculoSNR(imgOrig, imgComp):
     PSinal = np.sum(imgComp**2.0)
-    PRuido = np.sum(np.sum(imgOrig - imgComp)**2.0)
+    PRuido = np.sum((imgOrig-imgComp)**2.0)
     args = PSinal / PRuido
     return np.round(10.0*np.log10(args), 3)
 
@@ -545,11 +545,11 @@ def main():
           "======="
 
     # variavel que controla o modo de impressao de dados de teste
-    debug = True
+    debug = False
     test_block = 4095
 
     # factor de qualidade q
-    q = 10
+    q = 30
 
     #
     alfa = quality_factor(q)
@@ -619,15 +619,16 @@ def main():
     print "O tempo necessário para o bloco de entropy coding (huffman) foi de {} segundos".format(round(t4 - t3, 3))
 
     # imprime imagem
-    x_desc = revert_to_original_block(bloco_dct_dpcm, x.shape)
-    # print snr(x, x_desc.astype(np.uint8))
-    cv2.imshow("Lena cod alfa = 0", x_desc.astype(np.uint8))
-    cv2.waitKey(0) & 0xFF
+    # x_desc = revert_to_original_block(bloco_dct_dpcm, x.shape)
+    # cv2.imshow("Lena dc Q = {}.jpeg".format(q), x_desc.astype(np.uint8))
+    # cv2.waitKey(0) & 0xFF
+    # cv2.imwrite("Lena dc Q = {}.jpeg".format(q), x_desc.astype(np.uint8))
 
-    print "O bit Stream é valido? = " + str(bitstream_cod == ler("Lena_Cod.huf"))
+    if debug:
+        print "O bit Stream é valido? = " + str(bitstream_cod == ler("Lena_Cod.huf"))
 
     # leitura do ficheiro e reconstrução do ac e dc
-    dc, ac, n_blocos = le_huff(test_block, bloco_dct_dpcm_zz)
+    dc, ac, n_blocos = le_huff(test_block)
 
     if debug:
         print "o valor do DC descodificado é igual ao codificado = " + str(dc == dc_cod)
@@ -679,8 +680,8 @@ def main():
     print "factor q = " + str(q)
     print "alfa = " + str(alfa)
     print "SNR = " + str(calculoSNR(x, x_rec))
-    size_ini = path.getsize("samples/lena_gray.jpeg")
-    size_end = path.getsize("lena_output.jpeg")
+    size_ini = path.getsize("samples/lena.tiff")
+    size_end = path.getsize("Lena descodificada Q = {}.jpeg".format(q))
     print "A dimensão do ficheiro original é de {} Kb".format(round(size_ini / 1024., 2))
     print "A dimensão do ficheiro codificado é de {} Kb".format(round(size_end / 1024., 2))
     print "A taxa de compressão conseguida foi de {}".format(1. * size_ini / size_end)
