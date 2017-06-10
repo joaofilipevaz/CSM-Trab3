@@ -344,13 +344,9 @@ def le_huff(test_block, acs):
                     seqbits = seqbits[len(K5[y]):]
 
                     if K5[y] == "1010":
-                        if z == 1458:
-                            print "puta que pariu"
                         eob = True
                         ac.append((0, 0))
                         bloco_dct_dpcm_zz.append(ac)
-                        #np.append(bloco_dct_dpcm_zz[z], ac)
-                        print bloco_dct_dpcm_zz[z]
                         ac = []
                         break
 
@@ -361,17 +357,8 @@ def le_huff(test_block, acs):
                         # remove o valor lido da mensagem
                         seqbits = seqbits[size:]
 
-                        # teste para perceber se superamos o limite de runlenght do dicionario
-                        #if zero_run_loops > 0:
-
-                            # se sim temos que levar em conta os zeros que "ficaram para tras"
-                        #    ac.append((runlength+(15*zero_run_loops), amp_ac))
-                        #    zero_run_loops = 0
-                        #else:
                         ac.append((runlength, amp_ac))
-        print str(z) + " : " + str(bloco_dct_dpcm_zz[z] == acs[z])
-        print bloco_dct_dpcm_zz[z]
-        print acs[z]
+
     return dc, bloco_dct_dpcm_zz, n_blocos
 
 
@@ -562,7 +549,7 @@ def main():
     test_block = 4095
 
     # factor de qualidade q
-    q = 5
+    q = 10
 
     #
     alfa = quality_factor(q)
