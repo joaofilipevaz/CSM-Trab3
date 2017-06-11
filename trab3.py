@@ -11,6 +11,7 @@ import numpy as np
 from trab3Test import K3, K5
 from time import time
 from os import path
+import matplotlib
 
 # 1
 
@@ -608,10 +609,10 @@ def main():
     print "O tempo necessário para o bloco de entropy coding (huffman) foi de {} segundos".format(round(t4 - t3, 3))
 
     # imprime imagem
-    # x_desc = revert_to_original_block(bloco_dct_dpcm, x.shape)
-    # cv2.imshow("Lena dc Q = {}.jpeg".format(q), x_desc.astype(np.uint8))
-    # cv2.waitKey(0) & 0xFF
-    # cv2.imwrite("Lena dc Q = {}.jpeg".format(q), x_desc.astype(np.uint8))
+    x_desc = revert_to_original_block(bloco_dct_dpcm, x.shape)
+    #cv2.imshow("Lena dc Q = {}.jpeg".format(q), x_desc.astype(np.uint8))
+    #cv2.waitKey(0) & 0xFF
+    cv2.imwrite("Lena dc Q = {}.jpeg".format(q), x_desc.astype(np.uint8))
 
     if debug:
         print "O bit Stream é valido? = " + str(bitstream_cod == ler("Lena_Cod.huf"))
